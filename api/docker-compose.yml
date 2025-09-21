@@ -1,0 +1,49 @@
+# Versão do Docker Compose
+version: '3.8'
+
+# Definimos aqui os nossos contêineres (serviços)
+services:
+
+  # 1. Serviço da nossa API
+  api:
+    # Constrói a imagem a partir do Dockerfile na pasta atual (.)
+    build: .
+    # Nome do contêiner
+    container_name: nutriai-api-service
+    # Mapeia a porta 3000 do seu PC para a porta 4000 da API (como configuramos antes)
+    ports:
+      - "3000:4000"
+    # Define as variáveis de ambiente que a API usará para conectar ao banco
+    environment:
+      - DB_HOST=db
+      - DB_USER=myuser
+      - DB_PASSWORD=mypassword
+      - DB_DATABASE=nutridb
+      - DB_PORT=5432
+    # Garante que o serviço 'db' seja iniciado ANTES do serviço 'api'
+    depends_on:
+      - db
+
+  # 2. Serviço do Banco de Dados PostgreSQL
+  db:
+    # Usa a imagem oficial do PostgreSQL
+    image: postgres:15-alpine
+    # Nome do contêiner
+    container_name: postgres-db-service
+    # Sempre reinicia o contêiner se ele parar
+    restart: always
+    # Define as credenciais para o banco de dados (o Postgres usa essas variáveis para se autoconfigurar)
+    environment:
+      - POSTGRES_USER=myuser
+      - POSTGRES_PASSWORD=mypassword
+      - POSTGRES_DB=nutridb
+    # Mapeia a porta do Postgres para o seu PC (útil para acessar o DB com ferramentas externas como DBeaver)
+    ports:
+      - "5432:5432"
+    # Garante que os dados do banco não sejam perdidos ao recriar o contêiner
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+# Define um 'volume' para persistir os dados do banco de dados
+volumes:
+  postgres_data:

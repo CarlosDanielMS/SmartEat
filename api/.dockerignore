@@ -1,0 +1,9 @@
+# Ignora a pasta de dependências do Node, pois elas serão instaladas dentro do contêiner
+node_modules
+
+# Ignora logs de erro do npm
+npm-debug.log
+
+# Arquivos do Docker
+Dockerfile
+.dockerignore

@@ -1,0 +1,37 @@
+// prisma/schema.prisma
+
+// Define o cliente que será gerado (neste caso, para JavaScript/TypeScript)
+generator client {
+  provider = "prisma-client-js"
+}
+
+// Define a fonte de dados (nosso banco de dados PostgreSQL)
+datasource db {
+  provider = "postgresql"
+  // Lê a URL de conexão do arquivo .env
+  url      = env("DATABASE_URL")
+}
+
+// MODELO DE USUÁRIO
+// Substitui a tabela 'users'
+model User {
+  id            String    @id @default(uuid())
+  email         String    @unique
+  passwordHash  String    @map("password_hash") // Mapeia para a coluna password_hash no banco
+  roles         String[]  // Prisma suporta arrays de strings nativamente com Postgres
+
+  // Relação: Um usuário pode ter muitos refresh tokens
+  refreshTokens RefreshToken[]
+}
+
+// MODELO DE REFRESH TOKEN
+// Substitui a tabela 'refresh_tokens'
+model RefreshToken {
+  jti        String   @id @default(uuid())
+  expiresAt  DateTime @map("expires_at")
+  isRevoked  Boolean  @default(false) @map("is_revoked")
+
+  // Relação: O token pertence a um usuário
+  userId String @map("user_id")
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
