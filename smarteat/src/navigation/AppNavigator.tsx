@@ -1,79 +1,54 @@
 import React from "react";
-// Container principal de navegação do React Navigation
 import { NavigationContainer } from "@react-navigation/native";
-// Stack navigator nativo (navegação em pilha)
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
-
-// Hook de autenticação (AuthContext)
 import { useAuth } from "../context/AuthContext";
 
-// Telas da aplicação
+// Importando todas as telas existentes
 import SplashScreen from "../screens/SplashScreen";
-import LoginScreen from "../screens/LoginScreen";
-import HomeScreen from "../screens/HomeScreen";
-import AdminScreen from "../screens/AdminScreen";
+import Login from "../screens/login/Login";
+import Cadastro from "../screens/cadastro/Cadastro";
+import Dashboard from "../screens/dashboard/dashboard"; // Importando a nova tela
 
-// Definição dos tipos de parâmetros para cada rota do stack
-// - Aqui nenhuma rota espera parâmetros, então todas são undefined
+// Definindo todas as rotas que o app terá
 export type RootStackParamList = {
   Splash: undefined;
   Login: undefined;
-  Home: undefined;
-  Admin: undefined;
+  Cadastro: undefined;
+  Dashboard: undefined; // Nome da rota para o dashboard
 };
 
-// Cria o stack navigator tipado
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
-/**
- * Componente de navegação principal
- * - Define quais telas o usuário pode acessar de acordo com o status de autenticação
- */
 const AppNavigator = () => {
-  // Obtém o status global da autenticação (loading, signedOut, signedIn)
   const { status } = useAuth();
 
-  // Enquanto está carregando (bootstrap do AuthContext) → mostra Splash
+  // Tela de carregamento
   if (status === "loading") {
     return (
       <NavigationContainer>
         <Stack.Navigator>
-          <Stack.Screen
-            name="Splash"
-            component={SplashScreen}
-            options={{ headerShown: false }} // oculta header da splash
-          />
+          <Stack.Screen name="Splash" component={SplashScreen} options={{ headerShown: false }} />
         </Stack.Navigator>
       </NavigationContainer>
     );
   }
 
-  // Se o usuário está deslogado → mostra stack de Login
   return (
     <NavigationContainer>
-      {status === "signedOut" ? (
-        <Stack.Navigator>
-          <Stack.Screen
-            name="Login"
-            component={LoginScreen}
-            options={{ title: "Login" }}
-          />
-        </Stack.Navigator>
-      ) : (
-        // Se usuário está autenticado → mostra stack principal (Home + Admin)
-        <Stack.Navigator>
-          <Stack.Screen
-            name="Home"
-            component={HomeScreen}
-            options={{ title: "Home" }}
-          />
-          <Stack.Screen
-            name="Admin"
-            component={AdminScreen}
-            options={{ title: "Admin" }}
-          />
-        </Stack.Navigator>
-      )}
+      <Stack.Navigator>
+        {status === "signedOut" ? (
+          // Telas para usuários deslogados
+          <>
+            <Stack.Screen name="Login" component={Login} options={{ title: "Login" }} />
+            <Stack.Screen name="Cadastro" component={Cadastro} options={{ title: "Crie sua Conta" }} />
+          </>
+        ) : (
+          // Telas para usuários logados
+          <>
+            <Stack.Screen name="Dashboard" component={Dashboard} options={{ title: "Meu Dashboard" }} />
+          </>
+        )}
+      </Stack.Navigator>
     </NavigationContainer>
   );
 };

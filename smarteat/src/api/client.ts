@@ -13,7 +13,7 @@ import {
 // - Emulador Android → usa 192.168.0.138 para acessar localhost da máquina
 // - iOS Simulator → pode usar "localhost"
 // - Aqui está fixo no IP local da rede
-const BASE_URL = "http://192.168.0.213:4000";
+const BASE_URL = "http://192.168.0.115:4000";
 
 // Cria instância do Axios com baseURL e timeout de 10s
 export const API: AxiosInstance = axios.create({
