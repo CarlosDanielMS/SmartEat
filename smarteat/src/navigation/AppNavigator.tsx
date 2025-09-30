@@ -2,22 +2,31 @@ import React from "react";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { useAuth } from "../context/AuthContext";
+import { questionarioSteps } from "./questionarioSteps"; // Importa as etapas
 
-// Importando as telas e o arquivo de configuração
+// Telas
 import SplashScreen from "../screens/SplashScreen";
 import LoginScreen from "../screens/login/Login";
-import Cadastro from "../screens/cadastro/Cadastro";
-import Dashboard from "../screens/dashboard/Dashboard";
-import Questionario from "../screens/questionario/Questionario";
-import { questionarioSteps } from "./questionarioSteps"; // <- Importa as etapas
+import CadastroScreen from "../screens/cadastro/Cadastro";
+import DashboardScreen from "../screens/dashboard/Dashboard";
+import QuestionarioScreen from "../screens/questionario/Questionario";
 
-// Adicionando todas as rotas do questionário à lista de tipos
+// Interface para as opções de resposta
+interface StepOption {
+  label: string;
+  value: string;
+}
+
+// Tipagem para os parâmetros que cada tela do questionário receberá
 export type QuestionarioStepParams = {
   title: string;
-  dataKey: any;
+  dataKey: string;
   nextScreen: keyof RootStackParamList;
+  inputType: 'select' | 'text';
+  options?: StepOption[];
 };
 
+// Lista de todas as rotas e seus parâmetros
 export type RootStackParamList = {
   Splash: undefined;
   Login: undefined;
@@ -37,7 +46,7 @@ const AppNavigator = () => {
   const { status } = useAuth();
 
   if (status === "loading") {
-    // ... código da splash screen ...
+    return <SplashScreen />; // Simplificado para mostrar apenas a splash screen
   }
 
   return (
@@ -45,28 +54,28 @@ const AppNavigator = () => {
       <Stack.Navigator>
         {status === "signedOut" ? (
           <>
-            <Stack.Screen name="Login" component={LoginScreen} />
-
-            {/* CRIA UMA TELA PARA CADA ETAPA DO QUESTIONÁRIO DINAMICAMENTE */}
-            {questionarioSteps.map((step) => (
+            {/* Mapeia e cria uma tela para cada etapa do questionário */}
+            {questionarioSteps.map((step, index) => (
               <Stack.Screen
                 key={step.name}
                 name={step.name}
-                component={Questionario}
+                component={QuestionarioScreen}
                 initialParams={{
                   title: step.title,
                   dataKey: step.dataKey,
                   nextScreen: step.nextScreen,
+                  inputType: step.inputType,
+                  options: step.options,
                 }}
-                options={{ title: step.title }}
+                options={{ title: `Passo ${index + 1} de ${questionarioSteps.length}` }}
               />
             ))}
-
-            <Stack.Screen name="Cadastro" component={Cadastro} options={{ title: "Crie sua Conta" }} />
+            <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }} />
+            <Stack.Screen name="Cadastro" component={CadastroScreen} options={{ title: "Crie sua Conta" }} />
           </>
         ) : (
           <>
-            <Stack.Screen name="Dashboard" component={Dashboard} options={{ title: "Meu Dashboard" }} />
+            <Stack.Screen name="Dashboard" component={DashboardScreen} options={{ title: "Meu Dashboard" }} />
           </>
         )}
       </Stack.Navigator>
