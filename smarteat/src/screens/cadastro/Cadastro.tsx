@@ -31,6 +31,7 @@ export default function CadastroScreen({ navigation }: CadastroScreenProps) {
       Alert.alert("Erro", "As senhas não coincidem.");
       return;
     }
+    
 
     setLoading(true);
     try {

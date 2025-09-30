@@ -6,12 +6,14 @@ import {
   TouchableOpacity,
   Alert,
 } from "react-native";
-import type { NativeStackScreenProps } from "@react-navigation/native-stack";
+import type { NativeStackScreenProps, NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../../navigation/AppNavigator";
 import { styles } from "./styles";
 import { useAuth } from "../../context/AuthContext";
 
 type LoginScreenProps = NativeStackScreenProps<RootStackParamList, "Login">;
+
+type LoginNavProp = NativeStackNavigationProp<RootStackParamList>;
 
 export default function LoginScreen({ navigation }: LoginScreenProps) {
   const { login } = useAuth();
@@ -39,7 +41,8 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Login</Text>
+      <Text style={styles.title}>Bem-vindo de volta</Text>
+      <Text style={styles.subtitle}>Entre para acessar seu plano nutricional personalizado</Text>
       <TextInput
         style={styles.input}
         placeholder="Email"
@@ -63,12 +66,14 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
         <Text style={styles.buttonText}>{loading ? "Entrando..." : "Entrar"}</Text>
       </TouchableOpacity>
 
+      {/* ATUALIZAÇÃO AQUI */}
       <TouchableOpacity
         style={styles.linkContainer}
-        onPress={() => navigation.navigate("Cadastro")}
+        onPress={() => navigation.navigate("QuestionarioObjetivo" as any)} // Navega para a primeira pergunta
       >
-        <Text style={styles.linkText}>Não tem uma conta? Cadastre-se</Text>
+        <Text style={styles.linkText}>Não tem uma conta? Cadastre-se</Text>,
       </TouchableOpacity>
+
     </View>
   );
 }

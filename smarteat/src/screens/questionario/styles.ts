@@ -4,23 +4,20 @@ export const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#fff",
-    alignItems: "center",
-    justifyContent: "center",
     padding: 24,
+    justifyContent: "space-between", // Empurra o botão para baixo
+  },
+  content: {
+    flex: 1,
+    justifyContent: "center", // Centraliza o conteúdo da pergunta
   },
   title: {
-    fontSize: 28,
+    fontSize: 24,
     fontWeight: "bold",
-    marginBottom: 24,
+    textAlign: "center",
+    marginBottom: 32,
     color: "#333",
   },
-  subtitle: {
-  fontSize: 16,
-  fontWeight: 'bold',
-  marginBottom: 24,
-  color: '#333',
-  textAlign: 'center', // Adicione esta linha para centralizar o texto
-},
   input: {
     width: "100%",
     height: 50,
@@ -28,8 +25,8 @@ export const styles = StyleSheet.create({
     borderColor: "#ccc",
     borderRadius: 8,
     paddingHorizontal: 16,
-    marginBottom: 16,
     fontSize: 16,
+    textAlign: "center",
   },
   button: {
     width: "100%",
@@ -38,18 +35,11 @@ export const styles = StyleSheet.create({
     borderRadius: 8,
     alignItems: "center",
     justifyContent: "center",
-    marginTop: 10,
+    marginTop: 20,
   },
   buttonText: {
     color: "#fff",
     fontSize: 18,
     fontWeight: "bold",
-  },
-  linkContainer: {
-    marginTop: 20,
-  },
-  linkText: {
-    color: "#007bff",
-    fontSize: 16,
   },
 });
