@@ -1,24 +1,24 @@
-# 1. Escolha a imagem base oficial do Node.js. 
-# A versão 'alpine' é mais leve, o que é ótimo para produção.
+# 1. Imagem base
 FROM node:20-alpine
 
-# 2. Defina o diretório de trabalho dentro do contêiner
+# 2. Diretório de trabalho
 WORKDIR /app
 
-# 3. Copie os arquivos de dependência. 
-# O '*' garante que tanto o package.json quanto o package-lock.json sejam copiados.
+# 3. Instale as ferramentas de build
+RUN apk add --no-cache python3 make g++
+
+# 4. Copie os arquivos de configuração e o schema
 COPY package*.json ./
+COPY prisma ./prisma/
 
-# 4. Instale as dependências do projeto
-# Usamos 'npm ci' que é otimizado para ambientes de automação e mais rápido que 'npm install'
-RUN npm ci
+# 5. GARANTA A LIMPEZA e instale as dependências
+RUN rm -rf node_modules && npm ci
 
-# 5. Copie o resto do código da sua aplicação para o diretório de trabalho no contêiner
+# 6. Copie o resto do código da sua aplicação
 COPY . .
 
-# 6. Exponha a porta que sua API usa. 
-# Se sua API roda em outra porta (ex: 3333), altere aqui.
+# 7. Exponha a porta
 EXPOSE 4000
 
-# 7. Defina o comando para iniciar a aplicação quando o contêiner for executado
+# 8. Comando de inicialização
 CMD [ "npm", "start" ]

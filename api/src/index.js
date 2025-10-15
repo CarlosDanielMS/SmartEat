@@ -9,8 +9,8 @@ import { CONFIG } from './config.js'; // Arquivo de configuração (porta, vari�
 import { publicRouter } from './routes/public.routes.js'; // Rotas públicas (não requerem autenticação)
 import { authRouter } from './routes/auth.routes.js'; // Rotas de autenticação (login, signup, refresh token etc.)
 import { secureRouter } from './routes/secure.routes.js'; // Rotas privadas (protegidas, exigem autenticação)
-import { postsRouter } from './routes/posts.routes.js';
-
+import { questionarioRouter } from './routes/questionario.routes.js';
+import { userRouter } from './routes/user.routes.js'; 
 
 // Criação da aplicação Express
 const app = express();
@@ -31,6 +31,9 @@ app.use(express.json());
 // - 'dev' → formato simplificado e colorido (método, status, tempo de resposta)
 app.use(morgan('dev'));
 
+app.use('/questionario', questionarioRouter);
+
+
 // 🚏 Registro das rotas
 // Todas as rotas que começam com "/public" serão tratadas pelo publicRouter
 app.use('/public', publicRouter);
@@ -41,8 +44,7 @@ app.use('/auth', authRouter);
 // Todas as rotas que começam com "/private" serão tratadas pelo secureRouter
 app.use('/private', secureRouter);
 
-// Todas as rotas de posts começarão com /posts
-app.use('/posts', postsRouter);
+app.use('/user', userRouter);
 
 // Rota principal (root da API)
 // Usada geralmente para health check ou status do servidor

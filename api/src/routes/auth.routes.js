@@ -2,13 +2,17 @@
 import { Router } from 'express';
 
 // Biblioteca para hash e verificação de senhas
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs';
 
 // "Banco de dados" em memória (usuários e refresh tokens)
 import { db } from '../store.js';
 
 // Funções utilitárias de autenticação (tokens, refresh, revogação)
 import { handleRefresh, issueTokenPair, revokeRefreshToken } from '../auth.js';
+
+import { PrismaClient } from '@prisma/client';
+
+const prisma = new PrismaClient();
 
 // Cria um roteador específico para autenticação
 export const authRouter = Router();
@@ -19,26 +23,37 @@ export const authRouter = Router();
  * - Requer email + senha no corpo
  */
 authRouter.post('/register', async (req, res) => {
-  const { email, password, roles } = req.body || {};
+  const { email, password, roles, questionario } = req.body || {};
 
-  // Validação: precisa de email e senha
-  if (!email || !password) return res.status(400).json({ error: 'email & password required' });
+  if (!email || !password) {
+    return res.status(400).json({ error: 'Email e senha são obrigatórios' });
+  }
 
-  // Verifica se já existe usuário com este email
-  const exists = [...db.users.values()].find(u => u.email === email);
-  if (exists) return res.status(409).json({ error: 'Email already registered' });
+  try {
+    const existingUser = await prisma.user.findUnique({ where: { email } });
+    if (existingUser) {
+      return res.status(409).json({ error: 'Email já cadastrado' });
+    }
 
-  // Gera novo id (ex.: u3, u4...)
-  const id = 'u' + (db.users.size + 1);
+    const passwordHash = await bcrypt.hash(password, 10);
 
-  // Gera hash seguro da senha antes de salvar
-  const passwordHash = await bcrypt.hash(password, 10);
+    const newUser = await prisma.user.create({
+      data: {
+        email,
+        passwordHash,
+        roles: Array.isArray(roles) ? roles : ['user'],
+        // Cria o questionário junto com o usuário
+        questionario: {
+          create: questionario,
+        },
+      },
+    });
 
-  // Salva no "banco": id, email, hash e roles (padrão = ['user'])
-  db.users.set(id, { id, email, passwordHash, roles: Array.isArray(roles) ? roles : ['user'] });
-
-  // Retorna status 201 (criado) sem expor a senha
-  return res.status(201).json({ id, email });
+    return res.status(201).json({ id: newUser.id, email: newUser.email });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: 'Não foi possível criar a conta.' });
+  }
 });
 
 /**

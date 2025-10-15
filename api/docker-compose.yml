@@ -1,33 +1,31 @@
-# Versão do Docker Compose
-version: '3.8'
-
-# Definimos aqui os nossos contêineres (serviços)
 services:
-
   # 1. Serviço da nossa API
   api:
     build: .
-    # --- CORRIGIDO --- Nome do contêiner atualizado
-    container_name: smarteat-api-service-mobile
+    container_name: smarteat-api-service
     ports:
       - "4000:4000"
+    # A variável de ambiente para o banco de dados é crucial.
+    # Ela já está configurada corretamente para usar o nome do serviço 'db' como host.
     environment:
-      # --- CORRIGIDO --- Credenciais alinhadas com o serviço 'db'
-      - DB_HOST=db
-      - DB_USER=myuser
-      - DB_PASSWORD=mypassword
-      - DB_DATABASE=smarteat
-      - DB_PORT=5432
+      - DATABASE_URL=postgresql://myuser:mypassword@db:5432/smarteat?schema=public
+    # Comando aprimorado:
+    # 1. "npx prisma migrate deploy": Aplica automaticamente as migrações do Prisma para criar
+    #    as tabelas (User, Questionario, etc.) assim que o banco estiver pronto.
+    # 2. "npm start": Inicia a sua API somente após as migrações serem aplicadas.
+    command: sh -c "npx prisma migrate deploy && npm start"
+    # "depends_on" aprimorado:
+    # Agora, o serviço da API não apenas espera o contêiner do banco iniciar,
+    # mas espera até que ele esteja 100% pronto para aceitar conexões.
     depends_on:
-      - db
+      db:
+        condition: service_healthy
 
   # 2. Serviço do Banco de Dados PostgreSQL
   db:
     image: postgres:15-alpine
-    # --- CORRIGIDO --- Nome do contêiner atualizado
-    container_name: smarteat-db-service-mobile
+    container_name: smarteat-db-service
     restart: always
-    # As credenciais que o banco de dados usará na inicialização
     environment:
       - POSTGRES_USER=myuser
       - POSTGRES_PASSWORD=mypassword
@@ -36,7 +34,16 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    # Healthcheck (Verificação de Saúde):
+    # O Docker irá verificar a cada 10 segundos se o PostgreSQL está pronto
+    # para aceitar conexões antes de permitir que a API inicie.
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U myuser -d smarteat"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
-# Volume para persistir os dados do banco
+# Define o volume para persistir os dados do banco de dados
 volumes:
   postgres_data:
+
