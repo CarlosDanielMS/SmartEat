@@ -1,0 +1,4 @@
+#config.php remova o comentário (#) após puxar os arquivos
+.htaccess
+config.php
+environment.php
