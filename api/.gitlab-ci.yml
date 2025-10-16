@@ -1,0 +1,20 @@
+build:
+  stage: deploy
+  script:
+    - echo "Deploying to FTP server"
+    - apt-get update -qy
+    - apt-get install -y lftp
+    - if lftp -c "set ftp:ssl-allow no; open $FTP_HOST; user $FTP_USERNAME $FTP_PASSWORD; cls ./omnidiet.infocept.com.br/" | grep -q "omnidiet.infocept.com.br/"; then
+        echo "Folder exists on FTP server. Proceeding with deployment.";
+        LAST_DEPLOY_DATE=$(cat last_deploy_date.txt);
+        lftp -c "set ftp:ssl-allow no; open $FTP_HOST; user $FTP_USERNAME $FTP_PASSWORD; mirror --ignore-time --parallel=10 --exclude .git/ --reverse --verbose --newer-than='$LAST_DEPLOY_DATE' ./ ./omnidiet.infocept.com.br/; quit";
+        date -u +"%Y-%m-%d %H:%M:%S" > last_deploy_date.txt;
+      else
+        echo "Folder does not exist on FTP server. Deployment aborted.";
+        exit 1;
+      fi
+  environment:
+    name: production
+  only:
+    - main
+
