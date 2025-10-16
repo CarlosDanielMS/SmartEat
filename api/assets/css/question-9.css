@@ -1,0 +1,5 @@
+.btn-next.disabled-btn {
+    pointer-events: none; /* Impede cliques no botão */
+    opacity: 0.6; /* Opcional: muda a opacidade para dar um efeito visual de desabilitado */
+    cursor: not-allowed; /* Opcional: altera o cursor para mostrar que não é clicável */
+}
