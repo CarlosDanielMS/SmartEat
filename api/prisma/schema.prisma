@@ -1,0 +1,44 @@
+// api/prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// Defina a fonte de dados APENAS UMA VEZ
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// MODELO DE USUÁRIO
+model User {
+  id            String    @id @default(uuid())
+  email         String    @unique
+  passwordHash  String    @map("password_hash")
+  roles         String[]
+  createdAt     DateTime  @default(now()) @map("created_at")
+  refreshTokens RefreshToken[]
+  questionario  Questionario?
+}
+
+// MODELO DO QUESTIONÁRIO
+model Questionario {
+  id            String   @id @default(uuid())
+  objetivo      String?
+  genero        String?
+  anoNascimento String?
+  altura        String?
+  pesoAtual     String?
+  pesoAlvo      String?
+  userId        String   @unique @map("user_id")
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// MODELO DE REFRESH TOKEN
+model RefreshToken {
+  jti       String   @id @default(uuid())
+  expiresAt DateTime @map("expires_at")
+  isRevoked Boolean  @default(false) @map("is_revoked")
+  userId    String   @map("user_id")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
