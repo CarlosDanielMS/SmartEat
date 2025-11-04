@@ -1,8 +1,0 @@
-# api/.gitignore
-
-node_modules
-/src/generated/prisma
-
-# Adicione esta linha para ignorar o arquivo de ambiente
-.env
-/src/generated/prisma
