@@ -1,82 +1,154 @@
+// apps/mobile/src/screens/auth/LoginScreen.js
 import React, { useState } from 'react';
-import { View, TextInput, Button, StyleSheet, Text, Alert } from 'react-native';
-// Importe o hook useAuth do seu contexto
-import { useAuth } from '../../context/AuthContext';
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  Alert,
+  ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform
+} from 'react-native';
+import { useAuth } from '../../context/AuthContext'; // Importa o contexto atualizado
 
 export default function LoginScreen({ navigation }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const { signIn } = useAuth(); // Pegamos a função do contexto
+  const [loading, setLoading] = useState(false);
+
+  const { signIn } = useAuth(); // Pega a função do Supabase
 
   const handleLogin = async () => {
     if (!email || !password) {
-      Alert.alert('Erro', 'Por favor, preencha o email e a senha.');
+      Alert.alert('Erro', 'Por favor, preencha todos os campos.');
       return;
     }
-    setIsLoading(true);
+
     try {
-      // Tenta fazer o login
+      setLoading(true);
       await signIn(email, password);
-      // Se der certo, o App.js vai automaticamente mudar para a Home
-    } catch (e) {
-      // O erro é lançado do AuthContext
-      Alert.alert('Falha no Login', e.message);
+      // O redirecionamento acontece automaticamente pelo AuthContext (userToken muda)
+    } catch (error) {
+      Alert.alert('Falha no Login', error.message || 'Verifique suas credenciais.');
+    } finally {
+      setLoading(false);
     }
-    setIsLoading(false);
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Entrar</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Email"
-        value={email}
-        onChangeText={setEmail}
-        keyboardType="email-address"
-        autoCapitalize="none"
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Senha"
-        value={password}
-        onChangeText={setPassword}
-        secureTextEntry
-      />
-      <Button 
-        title={isLoading ? "Entrando..." : "Entrar"} 
-        onPress={handleLogin} 
-        disabled={isLoading} 
-      />
-      <Button
-        title="Não tem conta? Cadastre-se"
-        onPress={() => navigation.navigate('Register')} // Navega para a tela de Registro
-        color="#888" // Cor secundária
-      />
-    </View>
+    <KeyboardAvoidingView 
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      style={styles.container}
+    >
+      <View style={styles.formContainer}>
+        <Text style={styles.title}>Bem-vindo de volta!</Text>
+        <Text style={styles.subtitle}>Faça login para continuar</Text>
+
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>Email</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="seu@email.com"
+            autoCapitalize="none"
+            keyboardType="email-address"
+            value={email}
+            onChangeText={setEmail}
+          />
+        </View>
+
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>Senha</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="********"
+            secureTextEntry
+            value={password}
+            onChangeText={setPassword}
+          />
+        </View>
+
+        <TouchableOpacity 
+          style={styles.button} 
+          onPress={handleLogin} 
+          disabled={loading}
+        >
+          {loading ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <Text style={styles.buttonText}>Entrar</Text>
+          )}
+        </TouchableOpacity>
+
+        <TouchableOpacity onPress={() => navigation.navigate('Register')}>
+          <Text style={styles.linkText}>
+            Não tem uma conta? <Text style={styles.linkBold}>Cadastre-se</Text>
+          </Text>
+        </TouchableOpacity>
+      </View>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
-    padding: 16,
     backgroundColor: '#fff',
+    justifyContent: 'center',
+    padding: 20,
+  },
+  formContainer: {
+    width: '100%',
   },
   title: {
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: 'bold',
+    marginBottom: 10,
+    color: '#333',
     textAlign: 'center',
-    marginBottom: 24,
+  },
+  subtitle: {
+    fontSize: 16,
+    color: '#666',
+    marginBottom: 30,
+    textAlign: 'center',
+  },
+  inputGroup: {
+    marginBottom: 15,
+  },
+  label: {
+    marginBottom: 5,
+    color: '#333',
+    fontWeight: '500',
   },
   input: {
-    height: 44,
-    borderColor: '#ddd',
     borderWidth: 1,
+    borderColor: '#ddd',
     borderRadius: 8,
-    marginBottom: 12,
-    paddingHorizontal: 12,
+    padding: 12,
+    fontSize: 16,
+    backgroundColor: '#f9f9f9',
+  },
+  button: {
+    backgroundColor: '#007AFF',
+    padding: 15,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginTop: 10,
+    marginBottom: 20,
+  },
+  buttonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  linkText: {
+    textAlign: 'center',
+    color: '#666',
+  },
+  linkBold: {
+    color: '#007AFF',
+    fontWeight: 'bold',
   },
 });
