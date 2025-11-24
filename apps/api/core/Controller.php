@@ -15,9 +15,11 @@ class Controller {
 		include 'views/'.$viewName.'.php';
 	}
 
-	public function loadTemplate($template, $viewName, $viewData = array()) {
-		include 'views/template' . $template . '.php';
-	}
+	public function loadTemplate($templateName, $viewName, $data = array()) {
+    echo "Tentando carregar a view/template: $templateName | $viewName <br>";
+    // resto do método
+}
+
 
 	public function loadViewInTemplate($viewName, $viewData) {
 		extract($viewData);

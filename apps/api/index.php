@@ -1,4 +1,8 @@
 <?php
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
 date_default_timezone_set('America/Sao_Paulo');
 session_start();
 require_once 'vendor/autoload.php';
@@ -16,6 +20,12 @@ spl_autoload_register(function ($class){
 });
 
 
+
+
+echo "Vai instanciar core<br>";
 $core = new Core();
+echo "Instanciou core<br>";
 $core->run();
+echo "Executou run<br>";
+
 ?>
