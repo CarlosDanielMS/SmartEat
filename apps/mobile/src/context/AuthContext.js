@@ -1,119 +1,122 @@
+// Caminho: apps/mobile/src/context/AuthContext.js
 import React, { createContext, useState, useEffect, useContext } from 'react';
-import * as SecureStore from 'expo-secure-store';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import axios from 'axios';
-
-// --- MODO DE TESTE (SEM API) ---
-// const API_URL = 'http://SEU_IP_AQUI:3000/api';
+import { supabase } from '../lib/supabase'; 
 
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-  const [userToken, setUserToken] = useState(null);
+  const [user, setUser] = useState(null);
+  const [session, setSession] = useState(null);
   const [userRole, setUserRole] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [hasCompletedOnboarding, setHasCompletedOnboarding] = useState(false);
 
-  // Simulação de Banco de Dados em Memória
-  const [tempUserDb, setTempUserDb] = useState(null);
-  
-  // Admin Hardcoded para testes - GARANTINDO QUE ISTO ESTÁ AQUI
-  const adminUser = {
-    email: 'admin@teste.com',
-    password: '123'
+  const refreshUserRole = async (userId) => {
+    if (!userId) return;
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', userId)
+        .single();
+
+      if (data) {
+        setUserRole(data.role);
+      }
+    } catch (e) {
+      console.log('Erro ao buscar role:', e);
+    }
   };
 
   useEffect(() => {
-    const loadState = async () => {
+    const loadSession = async () => {
+      setIsLoading(true);
       try {
-        const token = await SecureStore.getItemAsync('userToken');
-        const role = await SecureStore.getItemAsync('userRole');
         const onboardingStatus = await AsyncStorage.getItem('hasCompletedOnboarding');
-
         if (onboardingStatus === 'true') {
-            setHasCompletedOnboarding(true);
+          setHasCompletedOnboarding(true);
         }
 
-        if (token) {
-          setUserToken(token);
-          if (role) {
-              setUserRole(role);
-          }
-          axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (session) {
+          setSession(session);
+          setUser(session.user);
+          await refreshUserRole(session.user.id);
         }
-      } catch (e) {
-        console.error('Falha ao carregar estado inicial', e);
+      } catch (error) {
+        console.error('Erro ao carregar sessão:', error);
+      } finally {
+        setIsLoading(false);
       }
-      setIsLoading(false);
     };
-    loadState();
+
+    loadSession();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+      
+      if (session?.user) {
+        await refreshUserRole(session.user.id);
+      } else {
+        setUserRole(null);
+      }
+      
+      setIsLoading(false);
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
   const authContext = {
     signIn: async (email, password) => {
-      console.log("MODO TESTE: Tentativa de Login com:", email);
-      await new Promise(resolve => setTimeout(resolve, 500));
-
-      let foundUser = null;
-      let role = 'user';
-      let token = null;
-
-      // 1. Verificar se é ADMIN (Verificação direta e explícita)
-      if (email === adminUser.email && password === adminUser.password) {
-        console.log("MODO TESTE: Credenciais de Admin reconhecidas!");
-        foundUser = adminUser;
-        role = 'admin';
-        token = "token_de_teste_simulado_ADMIN_123";
-      } 
-      // 2. Verificar se é USUÁRIO COMUM
-      else if (tempUserDb && tempUserDb.email === email && tempUserDb.password === password) {
-        console.log("MODO TESTE: Credenciais de Usuário reconhecidas!");
-        foundUser = tempUserDb;
-        role = 'user';
-        token = "token_de_teste_simulado_USER_456";
-      }
-
-      if (foundUser) {
-        setUserToken(token);
-        setUserRole(role);
-        await SecureStore.setItemAsync('userToken', token);
-        await SecureStore.setItemAsync('userRole', role);
-      } else {
-        // Mensagem de erro específica
-        if (email === adminUser.email) {
-           throw new Error("Senha de admin incorreta.");
-        } else if (!tempUserDb) {
-            throw new Error("Nenhum usuário cadastrado. Cadastre-se primeiro.");
-        } else {
-            throw new Error("Email ou senha inválidos.");
-        }
-      }
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+      if (error) throw new Error(error.message);
     },
 
     signUp: async (name, email, password, quizAnswers) => {
-      console.log("MODO TESTE: Cadastrando usuário:", { name, email });
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      setTempUserDb({ email, password }); 
-      
-      console.log("MODO TESTE: Usuário salvo na memória temporária.");
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: { full_name: name }
+        }
+      });
+
+      if (authError) throw new Error(authError.message);
+      if (!authData.user) throw new Error("Erro ao criar usuário.");
+
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .upsert({
+          id: authData.user.id,
+          full_name: name,
+          quiz_data: quizAnswers,
+          role: 'user'
+        });
+
+      if (profileError) {
+        console.log("Aviso: Erro ao salvar perfil extra", profileError);
+      }
+
       await AsyncStorage.setItem('hasCompletedOnboarding', 'true');
       setHasCompletedOnboarding(true);
     },
 
     signOut: async () => {
-      try {
-        setUserToken(null);
-        setUserRole(null);
-        delete axios.defaults.headers.common['Authorization'];
-        await SecureStore.deleteItemAsync('userToken');
-        await SecureStore.deleteItemAsync('userRole');
-      } catch (e) {
-        console.error('Falha no logout', e);
-      }
+      await supabase.auth.signOut();
+      setUser(null);
+      setSession(null);
+      setUserRole(null);
     },
 
-    userToken,
+    user,
+    userToken: session?.access_token,
     userRole,
     isLoading,
     hasCompletedOnboarding,
@@ -126,6 +129,4 @@ export const AuthProvider = ({ children }) => {
   );
 };
 
-export const useAuth = () => {
-  return useContext(AuthContext);
-};
+export const useAuth = () => useContext(AuthContext);

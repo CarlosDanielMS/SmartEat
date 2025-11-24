@@ -1,103 +1,195 @@
+// apps/mobile/src/screens/auth/RegisterScreen.js
 import React, { useState } from 'react';
-import { View, TextInput, Button, StyleSheet, Text, Alert } from 'react-native';
-// Importe o hook useAuth
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  Alert,
+  ActivityIndicator,
+  ScrollView,
+  KeyboardAvoidingView,
+  Platform
+} from 'react-native';
 import { useAuth } from '../../context/AuthContext';
 
-// --- ATUALIZAÇÃO ---
-// Recebemos 'route' para pegar os dados do questionário
-export default function RegisterScreen({ route, navigation }) {
+export default function RegisterScreen({ navigation }) {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+
   const { signUp } = useAuth();
 
-  // --- ATUALIZAÇÃO ---
-  // Pegamos as respostas que vieram da tela 'QuestionScreen'
-  // Usamos 'route.params?.quizAnswers' para evitar erro se 'params' for undefined
-  const { quizAnswers } = route.params || {};
-
   const handleRegister = async () => {
-    if (!name || !email || !password) {
-      Alert.alert('Erro', 'Por favor, preencha todos os campos.');
+    // Validações básicas
+    if (!name || !email || !password || !confirmPassword) {
+      Alert.alert('Erro', 'Preencha todos os campos.');
       return;
     }
-    
-    // (Opcional) Log para ver se os dados chegaram
-    console.log('Enviando para cadastro:', { name, email, quizAnswers });
 
-    setIsLoading(true);
-    try {
-      // --- ATUALIZAÇÃO ---
-      // Enviamos os dados do questionário JUNTOS com o cadastro
-      await signUp(name, email, password, quizAnswers);
-      
-      // Se der certo, o AuthContext vai atualizar o 'hasCompletedOnboarding'
-      // e o App.js vai nos levar para a tela de Login automaticamente.
-      Alert.alert(
-        'Cadastro Concluído!', 
-        'Sua conta foi criada com sucesso. Agora, por favor, faça o login.'
-      );
-      // O App.js vai tratar da navegação para o Login.
-
-    } catch (e) {
-      Alert.alert('Falha no Cadastro', e.message);
+    if (password !== confirmPassword) {
+      Alert.alert('Erro', 'As senhas não conferem.');
+      return;
     }
-    setIsLoading(false);
+
+    if (password.length < 6) {
+        Alert.alert('Erro', 'A senha deve ter pelo menos 6 caracteres.');
+        return;
+    }
+
+    try {
+      setLoading(true);
+      // Chama a função criada no AuthContext que usa o Supabase
+      await signUp(name, email, password);
+      
+      Alert.alert(
+        'Sucesso', 
+        'Conta criada! Verifique seu email para confirmar (se configurado) ou faça login.',
+        [{ text: 'OK', onPress: () => navigation.navigate('Login') }]
+      );
+    } catch (error) {
+      Alert.alert('Erro no Cadastro', error.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Finalizar Cadastro</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Nome"
-        value={name}
-        onChangeText={setName}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Email"
-        value={email}
-        onChangeText={setEmail}
-        keyboardType="email-address"
-        autoCapitalize="none"
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Senha (mín. 6 caracteres)"
-        value={password}
-        onChangeText={setPassword}
-        secureTextEntry
-      />
-      <Button 
-        title={isLoading ? "Criando conta..." : "Cadastrar e Finalizar"} 
-        onPress={handleRegister} 
-        disabled={isLoading}
-      />
-    </View>
+    <KeyboardAvoidingView 
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      style={styles.container}
+    >
+      <ScrollView contentContainerStyle={styles.scrollContent}>
+        <Text style={styles.title}>Crie sua conta</Text>
+        <Text style={styles.subtitle}>Comece sua jornada saudável hoje</Text>
+
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>Nome Completo</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="João Silva"
+            value={name}
+            onChangeText={setName}
+          />
+        </View>
+
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>Email</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="seu@email.com"
+            keyboardType="email-address"
+            autoCapitalize="none"
+            value={email}
+            onChangeText={setEmail}
+          />
+        </View>
+
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>Senha</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Mínimo 6 caracteres"
+            secureTextEntry
+            value={password}
+            onChangeText={setPassword}
+          />
+        </View>
+
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>Confirmar Senha</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Repita sua senha"
+            secureTextEntry
+            value={confirmPassword}
+            onChangeText={setConfirmPassword}
+          />
+        </View>
+
+        <TouchableOpacity 
+          style={styles.button} 
+          onPress={handleRegister}
+          disabled={loading}
+        >
+          {loading ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <Text style={styles.buttonText}>Cadastrar</Text>
+          )}
+        </TouchableOpacity>
+
+        <TouchableOpacity onPress={() => navigation.goBack()}>
+          <Text style={styles.linkText}>
+            Já tem uma conta? <Text style={styles.linkBold}>Faça Login</Text>
+          </Text>
+        </TouchableOpacity>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
-    padding: 16,
     backgroundColor: '#fff',
   },
-   title: {
-    fontSize: 24,
+  scrollContent: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    padding: 20,
+  },
+  title: {
+    fontSize: 28,
     fontWeight: 'bold',
+    marginBottom: 10,
+    color: '#333',
     textAlign: 'center',
-    marginBottom: 24,
+  },
+  subtitle: {
+    fontSize: 16,
+    color: '#666',
+    marginBottom: 30,
+    textAlign: 'center',
+  },
+  inputGroup: {
+    marginBottom: 15,
+  },
+  label: {
+    marginBottom: 5,
+    color: '#333',
+    fontWeight: '500',
   },
   input: {
-    height: 44,
-    borderColor: '#ddd',
     borderWidth: 1,
+    borderColor: '#ddd',
     borderRadius: 8,
-    marginBottom: 12,
-    paddingHorizontal: 12,
+    padding: 12,
+    fontSize: 16,
+    backgroundColor: '#f9f9f9',
+  },
+  button: {
+    backgroundColor: '#34C759', // Cor verde para cadastro geralmente funciona bem
+    padding: 15,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginTop: 10,
+    marginBottom: 20,
+  },
+  buttonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  linkText: {
+    textAlign: 'center',
+    color: '#666',
+  },
+  linkBold: {
+    color: '#007AFF',
+    fontWeight: 'bold',
   },
 });

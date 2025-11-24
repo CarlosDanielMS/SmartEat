@@ -1,107 +1,135 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
-import * as SecureStore from 'expo-secure-store';
-// Importamos o AsyncStorage
-import AsyncStorage from '@react-native-async-storage/async-storage'; 
-import axios from 'axios';
-
-// const API_URL = 'https://sua-api.com/api';
-// Usando seu IP local (exemplo):
-const API_URL = 'http://192.168.1.5:3000/api';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { supabase } from '../lib/supabase'; // Certifique-se que o caminho está correto
 
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-  const [userToken, setUserToken] = useState(null);
+  const [user, setUser] = useState(null);
+  const [session, setSession] = useState(null);
+  const [userRole, setUserRole] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
-
-  // --- NOSSA NOVA FLAG ---
-  // Esta flag controla se o usuário já viu o onboarding/cadastro
   const [hasCompletedOnboarding, setHasCompletedOnboarding] = useState(false);
 
-  useEffect(() => {
-    const loadState = async () => {
-      try {
-        // 1. Tenta carregar o TOKEN (se estiver logado)
-        const token = await SecureStore.getItemAsync('userToken');
-        if (token) {
-          setUserToken(token);
-          axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-        } else {
-          // 2. Se não tem token, verifica se já completou o onboarding
-          const onboardingStatus = await AsyncStorage.getItemAsync('hasCompletedOnboarding');
-          if (onboardingStatus === 'true') {
-            setHasCompletedOnboarding(true);
-          }
-        }
-      } catch (e) {
-        console.error('Falha ao carregar estado inicial', e);
+  // Função para buscar a Role do usuário no banco de dados
+  const refreshUserRole = async (userId) => {
+    if (!userId) return;
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', userId)
+        .single();
+
+      if (data) {
+        setUserRole(data.role);
       }
-      setIsLoading(false);
+    } catch (e) {
+      console.log('Erro ao buscar role:', e);
+    }
+  };
+
+  useEffect(() => {
+    const loadSession = async () => {
+      setIsLoading(true);
+      try {
+        // 1. Verificar Onboarding
+        const onboardingStatus = await AsyncStorage.getItem('hasCompletedOnboarding');
+        if (onboardingStatus === 'true') {
+          setHasCompletedOnboarding(true);
+        }
+
+        // 2. Recuperar Sessão Ativa do Supabase
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (session) {
+          setSession(session);
+          setUser(session.user);
+          await refreshUserRole(session.user.id);
+        }
+      } catch (error) {
+        console.error('Erro ao carregar sessão:', error);
+      } finally {
+        setIsLoading(false);
+      }
     };
-    loadState();
+
+    loadSession();
+
+    // 3. Ouvinte de eventos de Login/Logout (Automático)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+      
+      if (session?.user) {
+        await refreshUserRole(session.user.id);
+      } else {
+        setUserRole(null);
+      }
+      
+      setIsLoading(false);
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
   const authContext = {
+    // Login: Apenas chama o Supabase. O useEffect acima detecta a mudança e atualiza o App.
     signIn: async (email, password) => {
-      // (A lógica de login não muda)
-      try {
-        const response = await axios.post(`${API_URL}/login`, {
-          email: email,
-          password: password,
-        });
-        
-        const token = response.data.token;
-        setUserToken(token);
-        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-        await SecureStore.setItemAsync('userToken', token);
-      } catch (e) {
-        console.error('Falha no login', e.response?.data);
-        throw new Error(e.response?.data?.message || 'Erro de rede');
-      }
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+      if (error) throw new Error(error.message);
     },
 
-    // --- ATUALIZAMOS O CADASTRO ---
-    // Agora ele aceita as respostas do questionário
+    // Cadastro: Cria o usuário e salva os dados extras na tabela 'profiles'
     signUp: async (name, email, password, quizAnswers) => {
-      try {
-        // Enviamos NOME, EMAIL, SENHA e as RESPOSTAS para a API
-        await axios.post(`${API_URL}/cadastro`, {
-          name: name,
-          email: email,
-          password: password,
-          quizData: quizAnswers, // Enviando os dados do questionário
+      // 1. Criar Auth User
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: { full_name: name } // Salva nos metadados também
+        }
+      });
+
+      if (authError) throw new Error(authError.message);
+      if (!authData.user) throw new Error("Erro ao criar usuário.");
+
+      // 2. Salvar Perfil e Respostas do Quiz
+      // (Se você criou o Trigger SQL acima, o perfil já foi criado, então usamos UPSERT ou UPDATE)
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .upsert({
+          id: authData.user.id,
+          full_name: name,
+          quiz_data: quizAnswers,
+          role: 'user'
         });
 
-        // --- MUDANÇA IMPORTANTE ---
-        // 1. Marcamos que o onboarding foi concluído
-        await AsyncStorage.setItemAsync('hasCompletedOnboarding', 'true');
-        setHasCompletedOnboarding(true);
-        
-        // 2. NÃO fazemos login automático.
-        // O App.js vai reagir a 'hasCompletedOnboarding' e mostrar o Login.
-
-      } catch (e) {
-        console.error('Falha no cadastro', e.response?.data);
-        throw new Error(e.response?.data?.message || 'Erro de rede');
+      if (profileError) {
+        console.log("Aviso: Erro ao salvar perfil extra", profileError);
       }
+
+      // 3. Atualizar flags locais
+      await AsyncStorage.setItem('hasCompletedOnboarding', 'true');
+      setHasCompletedOnboarding(true);
     },
 
     signOut: async () => {
-      // (A lógica de logout não muda)
-      try {
-        setUserToken(null);
-        delete axios.defaults.headers.common['Authorization'];
-        await SecureStore.deleteItemAsync('userToken');
-      } catch (e) {
-        console.error('Falha no logout', e);
-      }
-      // 'hasCompletedOnboarding' continua 'true', então o usuário
-      // será direcionado para o Login, o que está correto.
+      await supabase.auth.signOut();
+      // Limpa estados para garantir que a UI atualize
+      setUser(null);
+      setSession(null);
+      setUserRole(null);
     },
-    
-    userToken,
+
+    user,
+    userToken: session?.access_token, // O App.js verifica se userToken existe para navegar
+    userRole,
     isLoading,
-    hasCompletedOnboarding, // <-- Exportamos a nova flag
+    hasCompletedOnboarding,
   };
 
   return (
@@ -111,6 +139,4 @@ export const AuthProvider = ({ children }) => {
   );
 };
 
-export const useAuth = () => {
-  return useContext(AuthContext);
-};
+export const useAuth = () => useContext(AuthContext);
