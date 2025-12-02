@@ -1,5 +1,5 @@
 // apps/mobile/src/screens/auth/RegisterScreen.js
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -10,11 +10,12 @@ import {
   ActivityIndicator,
   ScrollView,
   KeyboardAvoidingView,
-  Platform
+  Platform,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../../context/AuthContext';
 
-export default function RegisterScreen({ navigation }) {
+export default function RegisterScreen({ navigation, route }) {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -23,10 +24,27 @@ export default function RegisterScreen({ navigation }) {
 
   const { signUp } = useAuth();
 
+  // respostas do quiz, se vieram do QuestionScreen
+  const quizAnswers = route?.params?.quizAnswers || {};
+
+  useEffect(() => {
+    if (quizAnswers && Object.keys(quizAnswers).length > 0) {
+      Alert.alert(
+        'Quiz Completo! 🎉',
+        'Suas respostas serão salvas ao criar sua conta.',
+        [{ text: 'OK' }]
+      );
+    }
+  }, []);
+
   const handleRegister = async () => {
-    // Validações básicas
     if (!name || !email || !password || !confirmPassword) {
       Alert.alert('Erro', 'Preencha todos os campos.');
+      return;
+    }
+
+    if (!email.includes('@')) {
+      Alert.alert('Erro', 'Digite um email válido.');
       return;
     }
 
@@ -36,20 +54,24 @@ export default function RegisterScreen({ navigation }) {
     }
 
     if (password.length < 6) {
-        Alert.alert('Erro', 'A senha deve ter pelo menos 6 caracteres.');
-        return;
+      Alert.alert('Erro', 'A senha deve ter pelo menos 6 caracteres.');
+      return;
+    }
+
+    if (name.trim().length < 3) {
+      Alert.alert('Erro', 'Digite seu nome completo.');
+      return;
     }
 
     try {
       setLoading(true);
-      // Chama a função criada no AuthContext que usa o Supabase
-      await signUp(name, email, password);
-      
+      await signUp(name, email, password, quizAnswers); // ✅ envia quizAnswers
+
       Alert.alert(
-        'Sucesso', 
-        'Conta criada! Verifique seu email para confirmar (se configurado) ou faça login.',
-        [{ text: 'OK', onPress: () => navigation.navigate('Login') }]
+        'Sucesso!',
+        'Conta criada com sucesso! Bem-vindo ao SmartEat.'
       );
+      // Navegação após cadastro é automática via AuthContext/AppNavigator
     } catch (error) {
       Alert.alert('Erro no Cadastro', error.message);
     } finally {
@@ -57,139 +79,257 @@ export default function RegisterScreen({ navigation }) {
     }
   };
 
+  const goToLogin = () => {
+    navigation.navigate('Login', { quizAnswers });
+  };
+
   return (
-    <KeyboardAvoidingView 
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      style={styles.container}
-    >
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        <Text style={styles.title}>Crie sua conta</Text>
-        <Text style={styles.subtitle}>Comece sua jornada saudável hoje</Text>
-
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Nome Completo</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="João Silva"
-            value={name}
-            onChangeText={setName}
-          />
-        </View>
-
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Email</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="seu@email.com"
-            keyboardType="email-address"
-            autoCapitalize="none"
-            value={email}
-            onChangeText={setEmail}
-          />
-        </View>
-
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Senha</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Mínimo 6 caracteres"
-            secureTextEntry
-            value={password}
-            onChangeText={setPassword}
-          />
-        </View>
-
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Confirmar Senha</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Repita sua senha"
-            secureTextEntry
-            value={confirmPassword}
-            onChangeText={setConfirmPassword}
-          />
-        </View>
-
-        <TouchableOpacity 
-          style={styles.button} 
-          onPress={handleRegister}
-          disabled={loading}
+    <SafeAreaView style={styles.container}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={styles.keyboardView}
+      >
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
         >
-          {loading ? (
-            <ActivityIndicator color="#fff" />
-          ) : (
-            <Text style={styles.buttonText}>Cadastrar</Text>
-          )}
-        </TouchableOpacity>
+          <View style={styles.header}>
+            <Text style={styles.logo}>🍎</Text>
+            <Text style={styles.title}>Criar Conta</Text>
+            <Text style={styles.subtitle}>
+              Comece sua jornada saudável hoje
+            </Text>
+          </View>
 
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Text style={styles.linkText}>
-            Já tem uma conta? <Text style={styles.linkBold}>Faça Login</Text>
-          </Text>
-        </TouchableOpacity>
-      </ScrollView>
-    </KeyboardAvoidingView>
+          {quizAnswers && Object.keys(quizAnswers).length > 0 && (
+            <View style={styles.quizBanner}>
+              <Text style={styles.quizBannerText}>
+                ✓ Quiz completo - Suas preferências serão salvas
+              </Text>
+            </View>
+          )}
+
+          <View style={styles.form}>
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Nome Completo</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="João Silva"
+                autoCapitalize="words"
+                autoComplete="name"
+                value={name}
+                onChangeText={setName}
+                editable={!loading}
+              />
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Email</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="seu@email.com"
+                keyboardType="email-address"
+                autoCapitalize="none"
+                autoComplete="email"
+                value={email}
+                onChangeText={setEmail}
+                editable={!loading}
+              />
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Senha</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Mínimo 6 caracteres"
+                secureTextEntry
+                autoCapitalize="none"
+                autoComplete="password-new"
+                value={password}
+                onChangeText={setPassword}
+                editable={!loading}
+              />
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Confirmar Senha</Text>
+              <TextInput
+                style={styles.input}
+                placeholder='Repita sua senha'
+                secureTextEntry
+                autoCapitalize='none'
+                autoComplete='password-new'
+                value={confirmPassword}
+                onChangeText={setConfirmPassword}
+                editable={!loading}
+              />
+            </View>
+
+            <TouchableOpacity
+              style={[styles.button, loading && styles.buttonDisabled]}
+              onPress={handleRegister}
+              disabled={loading}
+            >
+              {loading ? (
+                <ActivityIndicator color='#fff' />
+              ) : (
+                <Text style={styles.buttonText}>Criar Conta</Text>
+              )}
+            </TouchableOpacity>
+
+            <View style={styles.termsContainer}>
+              <Text style={styles.termsText}>
+                Ao criar uma conta, você concorda com nossos{' '}
+                <Text style={styles.termsLink}>Termos de Uso</Text> e{' '}
+                <Text style={styles.termsLink}>Política de Privacidade</Text>
+              </Text>
+            </View>
+
+            <View style={styles.divider}>
+              <View style={styles.dividerLine} />
+              <Text style={styles.dividerText}>OU</Text>
+              <View style={styles.dividerLine} />
+            </View>
+
+            <TouchableOpacity
+              style={styles.secondaryButton}
+              onPress={goToLogin}
+              disabled={loading}
+            >
+              <Text style={styles.secondaryButtonText}>
+                Já tenho uma conta
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
 
+// estilos
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',
   },
+  keyboardView: {
+    flex: 1,
+  },
   scrollContent: {
     flexGrow: 1,
-    justifyContent: 'center',
     padding: 20,
+    paddingTop: 40,
+  },
+  header: {
+    alignItems: 'center',
+    marginBottom: 30,
+  },
+  logo: {
+    fontSize: 60,
+    marginBottom: 10,
   },
   title: {
-    fontSize: 28,
+    fontSize: 32,
     fontWeight: 'bold',
-    marginBottom: 10,
     color: '#333',
-    textAlign: 'center',
+    marginBottom: 8,
   },
   subtitle: {
     fontSize: 16,
     color: '#666',
-    marginBottom: 30,
     textAlign: 'center',
   },
+  quizBanner: {
+    backgroundColor: '#e8f5e9',
+    padding: 12,
+    borderRadius: 12,
+    marginBottom: 20,
+    borderLeftWidth: 4,
+    borderLeftColor: '#34C759',
+  },
+  quizBannerText: {
+    color: '#2e7d32',
+    fontSize: 14,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  form: {
+    width: '100%',
+  },
   inputGroup: {
-    marginBottom: 15,
+    marginBottom: 16,
   },
   label: {
-    marginBottom: 5,
+    marginBottom: 8,
     color: '#333',
-    fontWeight: '500',
+    fontWeight: '600',
+    fontSize: 14,
   },
   input: {
     borderWidth: 1,
     borderColor: '#ddd',
-    borderRadius: 8,
-    padding: 12,
+    borderRadius: 12,
+    padding: 16,
     fontSize: 16,
     backgroundColor: '#f9f9f9',
   },
   button: {
-    backgroundColor: '#34C759', // Cor verde para cadastro geralmente funciona bem
-    padding: 15,
-    borderRadius: 8,
+    backgroundColor: '#34C759',
+    padding: 16,
+    borderRadius: 12,
     alignItems: 'center',
     marginTop: 10,
-    marginBottom: 20,
+    marginBottom: 15,
+  },
+  buttonDisabled: {
+    opacity: 0.6,
   },
   buttonText: {
     color: '#fff',
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: 'bold',
   },
-  linkText: {
-    textAlign: 'center',
-    color: '#666',
+  termsContainer: {
+    marginBottom: 20,
   },
-  linkBold: {
+  termsText: {
+    fontSize: 12,
+    color: '#666',
+    textAlign: 'center',
+    lineHeight: 18,
+  },
+  termsLink: {
     color: '#007AFF',
+    fontWeight: '600',
+  },
+  divider: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 20,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: '#ddd',
+  },
+  dividerText: {
+    marginHorizontal: 10,
+    color: '#999',
+    fontSize: 14,
+  },
+  secondaryButton: {
+    borderWidth: 2,
+    borderColor: '#34C759',
+    padding: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  secondaryButtonText: {
+    color: '#34C759',
+    fontSize: 16,
     fontWeight: 'bold',
   },
 });

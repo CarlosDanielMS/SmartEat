@@ -45,7 +45,7 @@ export default function AdminHomeScreen({ navigation }) {
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.container}>
-        <Text style={styles.dashboardTitle}>Dashboard</Text>
+        <Text style={styles.dashboardTitle}>SmartEat</Text>
         
         {/* Tradução da <div class="row"> */}
         <View style={styles.row}>

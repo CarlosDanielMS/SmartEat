@@ -1,6 +1,5 @@
-import React, { useLayoutEffect, useState, useCallback } from 'react'; // <-- 1. Importei o useCallback
+import React, { useLayoutEffect, useState, useCallback } from 'react';
 import { View, Text, StyleSheet, Button, ScrollView } from 'react-native';
-// --- 2. Importação Corrigida ---
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { infoSteps } from '../../data/quizData'; 
@@ -38,7 +37,8 @@ const ListItem = ({ item }) => {
 // --- Componente Principal da Tela ---
 
 export default function QuizStepScreen({ route, navigation }) {
-  const { step } = route.params;
+  // ✅ CORREÇÃO: Adicionar valor padrão caso route.params seja undefined
+  const step = route.params?.step || 1;
   const [isNavigating, setIsNavigating] = useState(false);
   const stepData = infoSteps[step - 1]; 
   const isLastStep = step === infoSteps.length;
@@ -51,13 +51,11 @@ export default function QuizStepScreen({ route, navigation }) {
     }
   }, [navigation, step, stepData]);
 
-  // --- NOSSA CORREÇÃO (useCallback) ---
   useFocusEffect(
-    useCallback(() => { // <-- 3. Corrigido de React.Callback para useCallback
+    useCallback(() => {
       setIsNavigating(false); 
     }, []) 
   );
-  // -------------------------
 
   const handleNext = () => {
     if (isNavigating) return; 
