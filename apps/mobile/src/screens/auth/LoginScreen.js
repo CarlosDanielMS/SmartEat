@@ -1,5 +1,5 @@
 // apps/mobile/src/screens/auth/LoginScreen.js
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -9,146 +9,270 @@ import {
   Alert,
   ActivityIndicator,
   KeyboardAvoidingView,
-  Platform
+  Platform,
+  ScrollView,
 } from 'react-native';
-import { useAuth } from '../../context/AuthContext'; // Importa o contexto atualizado
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { useAuth } from '../../context/AuthContext';
 
-export default function LoginScreen({ navigation }) {
+export default function LoginScreen({ navigation, route }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const { signIn } = useAuth();
 
-  const { signIn } = useAuth(); // Pega a função do Supabase
+  // respostas do quiz, se veio do QuestionScreen
+  const quizAnswers = route?.params?.quizAnswers || null;
+
+  useEffect(() => {
+    if (quizAnswers) {
+      Alert.alert(
+        'Quiz Completo! 🎉',
+        'Faça login para continuar ou crie uma conta para salvar suas respostas.',
+        [{ text: 'OK' }]
+      );
+    }
+  }, [quizAnswers]);
 
   const handleLogin = async () => {
     if (!email || !password) {
-      Alert.alert('Erro', 'Por favor, preencha todos os campos.');
+      Alert.alert('Erro', 'Preencha todos os campos.');
+      return;
+    }
+
+    if (!email.includes('@')) {
+      Alert.alert('Erro', 'Digite um email válido.');
       return;
     }
 
     try {
       setLoading(true);
-      await signIn(email, password);
-      // O redirecionamento acontece automaticamente pelo AuthContext (userToken muda)
+      await signIn(email, password, quizAnswers); // ✅ envia quizAnswers
+      // navegação pós-login é feita pelo AuthContext/AppNavigator
     } catch (error) {
-      Alert.alert('Falha no Login', error.message || 'Verifique suas credenciais.');
+      Alert.alert(
+        'Erro no Login',
+        error.message || 'Email ou senha incorretos.'
+      );
     } finally {
       setLoading(false);
     }
   };
 
+  const goToRegister = () => {
+    navigation.navigate('Register', { quizAnswers });
+  };
+
   return (
-    <KeyboardAvoidingView 
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      style={styles.container}
-    >
-      <View style={styles.formContainer}>
-        <Text style={styles.title}>Bem-vindo de volta!</Text>
-        <Text style={styles.subtitle}>Faça login para continuar</Text>
-
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Email</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="seu@email.com"
-            autoCapitalize="none"
-            keyboardType="email-address"
-            value={email}
-            onChangeText={setEmail}
-          />
-        </View>
-
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Senha</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="********"
-            secureTextEntry
-            value={password}
-            onChangeText={setPassword}
-          />
-        </View>
-
-        <TouchableOpacity 
-          style={styles.button} 
-          onPress={handleLogin} 
-          disabled={loading}
+    <SafeAreaView style={styles.container}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={styles.keyboardView}
+      >
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
         >
-          {loading ? (
-            <ActivityIndicator color="#fff" />
-          ) : (
-            <Text style={styles.buttonText}>Entrar</Text>
-          )}
-        </TouchableOpacity>
+          <View style={styles.header}>
+            <Text style={styles.logo}>🍎</Text>
+            <Text style={styles.title}>SmartEat</Text>
+            <Text style={styles.subtitle}>Bem-vindo de volta!</Text>
+          </View>
 
-        <TouchableOpacity onPress={() => navigation.navigate('Register')}>
-          <Text style={styles.linkText}>
-            Não tem uma conta? <Text style={styles.linkBold}>Cadastre-se</Text>
-          </Text>
-        </TouchableOpacity>
-      </View>
-    </KeyboardAvoidingView>
+          <View style={styles.form}>
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Email</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="seu@email.com"
+                keyboardType="email-address"
+                autoCapitalize="none"
+                autoComplete="email"
+                value={email}
+                onChangeText={setEmail}
+                editable={!loading}
+              />
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Senha</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Sua senha"
+                secureTextEntry
+                autoCapitalize="none"
+                autoComplete="password"
+                value={password}
+                onChangeText={setPassword}
+                editable={!loading}
+              />
+            </View>
+
+            <TouchableOpacity
+              style={styles.forgotPassword}
+              onPress={() =>
+                Alert.alert(
+                  'Em breve',
+                  'Funcionalidade de recuperação de senha em desenvolvimento.'
+                )
+              }
+            >
+              <Text style={styles.forgotPasswordText}>Esqueceu a senha?</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.button, loading && styles.buttonDisabled]}
+              onPress={handleLogin}
+              disabled={loading}
+            >
+              {loading ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <Text style={styles.buttonText}>Entrar</Text>
+              )}
+            </TouchableOpacity>
+
+            <View className="divider" style={styles.divider}>
+              <View style={styles.dividerLine} />
+              <Text style={styles.dividerText}>OU</Text>
+              <View style={styles.dividerLine} />
+            </View>
+
+            <TouchableOpacity
+              style={styles.secondaryButton}
+              onPress={goToRegister}
+              disabled={loading}
+            >
+              <Text style={styles.secondaryButtonText}>
+                Criar nova conta
+              </Text>
+            </TouchableOpacity>
+
+            {quizAnswers && (
+              <View style={styles.quizInfo}>
+                <Text style={styles.quizInfoText}>
+                  ✓ Suas respostas do quiz serão salvas ao criar uma conta
+                </Text>
+              </View>
+            )}
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
 
+// estilos iguais aos que você já tinha
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',
+  },
+  keyboardView: {
+    flex: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
     justifyContent: 'center',
     padding: 20,
   },
-  formContainer: {
-    width: '100%',
+  header: {
+    alignItems: 'center',
+    marginBottom: 40,
+  },
+  logo: {
+    fontSize: 60,
+    marginBottom: 10,
   },
   title: {
-    fontSize: 28,
+    fontSize: 32,
     fontWeight: 'bold',
-    marginBottom: 10,
     color: '#333',
-    textAlign: 'center',
+    marginBottom: 8,
   },
   subtitle: {
     fontSize: 16,
     color: '#666',
-    marginBottom: 30,
-    textAlign: 'center',
+  },
+  form: {
+    width: '100%',
   },
   inputGroup: {
-    marginBottom: 15,
+    marginBottom: 20,
   },
   label: {
-    marginBottom: 5,
+    marginBottom: 8,
     color: '#333',
-    fontWeight: '500',
+    fontWeight: '600',
+    fontSize: 14,
   },
   input: {
     borderWidth: 1,
     borderColor: '#ddd',
-    borderRadius: 8,
-    padding: 12,
+    borderRadius: 12,
+    padding: 16,
     fontSize: 16,
     backgroundColor: '#f9f9f9',
   },
-  button: {
-    backgroundColor: '#007AFF',
-    padding: 15,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginTop: 10,
+  forgotPassword: {
+    alignSelf: 'flex-end',
     marginBottom: 20,
+  },
+  forgotPasswordText: {
+    color: '#007AFF',
+    fontSize: 14,
+  },
+  button: {
+    backgroundColor: '#34C759',
+    padding: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  buttonDisabled: {
+    opacity: 0.6,
   },
   buttonText: {
     color: '#fff',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  divider: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 20,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: '#ddd',
+  },
+  dividerText: {
+    marginHorizontal: 10,
+    color: '#999',
+    fontSize: 14,
+  },
+  secondaryButton: {
+    borderWidth: 2,
+    borderColor: '#34C759',
+    padding: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  secondaryButtonText: {
+    color: '#34C759',
     fontSize: 16,
     fontWeight: 'bold',
   },
-  linkText: {
-    textAlign: 'center',
-    color: '#666',
+  quizInfo: {
+    backgroundColor: '#e8f5e9',
+    padding: 12,
+    borderRadius: 8,
+    marginTop: 20,
   },
-  linkBold: {
-    color: '#007AFF',
-    fontWeight: 'bold',
+  quizInfoText: {
+    color: '#2e7d32',
+    fontSize: 14,
+    textAlign: 'center',
   },
 });

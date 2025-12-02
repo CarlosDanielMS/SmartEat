@@ -1,4 +1,3 @@
-// apps/mobile/src/navigation/AppNavigator.js
 import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
@@ -14,6 +13,7 @@ import AppTabs from './AppTabs';
 
 // Importar telas de Onboarding/Quiz
 import QuizStepScreen from '../screens/app/QuizStepScreen';
+import QuestionScreen from '../screens/app/QuestionScreen';
 import WeightGoalScreen from '../screens/app/WeightGoalScreen';
 
 const Stack = createNativeStackNavigator();
@@ -39,22 +39,28 @@ export default function AppNavigator() {
     <NavigationContainer>
       <Stack.Navigator screenOptions={{ headerShown: false }}>
         {userToken ? (
-          // Usuário autenticado
-          hasCompletedOnboarding ? (
-            // Já completou onboarding -> vai para o App
-            <Stack.Screen name="AppTabs" component={AppTabs} />
-          ) : (
-            // Precisa completar Quiz primeiro
-            <>
-              <Stack.Screen name="QuizStep" component={QuizStepScreen} />
-              <Stack.Screen name="WeightGoal" component={WeightGoalScreen} />
-            </>
-          )
+          // Usuário autenticado -> vai direto para o App
+          <Stack.Screen name="AppTabs" component={AppTabs} />
         ) : (
-          // Usuário NÃO autenticado -> Login/Register
+          // Usuário NÃO autenticado -> Quiz + Login/Register
           <>
-            <Stack.Screen name="Login" component={LoginScreen} />
-            <Stack.Screen name="Register" component={RegisterScreen} />
+            <Stack.Screen 
+              name="QuizStep" 
+              component={QuizStepScreen}
+              initialParams={{ step: 1 }}
+            />
+            <Stack.Screen 
+              name="Question" 
+              component={QuestionScreen}
+            />
+            <Stack.Screen 
+              name="Login" 
+              component={LoginScreen} 
+            />
+            <Stack.Screen 
+              name="Register" 
+              component={RegisterScreen} 
+            />
           </>
         )}
       </Stack.Navigator>

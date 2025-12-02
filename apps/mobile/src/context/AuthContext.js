@@ -1,132 +1,173 @@
-// Caminho: apps/mobile/src/context/AuthContext.js
-import React, { createContext, useState, useEffect, useContext } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { supabase } from '../lib/supabase'; 
+// apps/mobile/src/context/AuthContext.js
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+} from 'react';
+import { supabase } from '../lib/supabase';
 
 const AuthContext = createContext();
 
-export const AuthProvider = ({ children }) => {
+export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
-  const [session, setSession] = useState(null);
-  const [userRole, setUserRole] = useState(null);
+  const [userToken, setUserToken] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [hasCompletedOnboarding, setHasCompletedOnboarding] = useState(false);
 
-  const refreshUserRole = async (userId) => {
-    if (!userId) return;
-    try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', userId)
-        .single();
-
-      if (data) {
-        setUserRole(data.role);
-      }
-    } catch (e) {
-      console.log('Erro ao buscar role:', e);
-    }
-  };
-
   useEffect(() => {
-    const loadSession = async () => {
-      setIsLoading(true);
+    const init = async () => {
       try {
-        const onboardingStatus = await AsyncStorage.getItem('hasCompletedOnboarding');
-        if (onboardingStatus === 'true') {
-          setHasCompletedOnboarding(true);
-        }
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
 
-        const { data: { session } } = await supabase.auth.getSession();
-        
-        if (session) {
-          setSession(session);
+        if (session?.user) {
           setUser(session.user);
-          await refreshUserRole(session.user.id);
+          setUserToken(session.access_token);
+          await refreshProfileFlags(session.user.id);
         }
-      } catch (error) {
-        console.error('Erro ao carregar sessão:', error);
       } finally {
         setIsLoading(false);
       }
     };
 
-    loadSession();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      
-      if (session?.user) {
-        await refreshUserRole(session.user.id);
-      } else {
-        setUserRole(null);
+    const { data: authListener } = supabase.auth.onAuthStateChange(
+      async (_event, session) => {
+        if (session?.user) {
+          setUser(session.user);
+          setUserToken(session.access_token);
+          await refreshProfileFlags(session.user.id);
+        } else {
+          setUser(null);
+          setUserToken(null);
+          setHasCompletedOnboarding(false);
+        }
       }
-      
-      setIsLoading(false);
-    });
+    );
 
-    return () => subscription.unsubscribe();
+    init();
+    return () => authListener?.subscription?.unsubscribe();
   }, []);
 
-  const authContext = {
-    signIn: async (email, password) => {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-      if (error) throw new Error(error.message);
-    },
+  const ensureProfileRow = async (userId, fullName) => {
+    const { error } = await supabase
+      .from('profiles')
+      .upsert(
+        {
+          id: userId,
+          full_name: fullName || null,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: 'id' }
+      );
 
-    signUp: async (name, email, password, quizAnswers) => {
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: { full_name: name }
-        }
-      });
+    if (error) throw error;
+  };
 
-      if (authError) throw new Error(authError.message);
-      if (!authData.user) throw new Error("Erro ao criar usuário.");
+  const refreshProfileFlags = async (userId) => {
+    const { data: profile, error } = await supabase
+      .from('profiles')
+      .select('quiz_data')
+      .eq('id', userId)
+      .maybeSingle();
 
-      const { error: profileError } = await supabase
+    if (error) {
+      console.error('Erro ao ler profile para flags:', error);
+      setHasCompletedOnboarding(false);
+      return;
+    }
+
+    const completed =
+      !!profile &&
+      !!profile.quiz_data &&
+      Object.keys(profile.quiz_data).length > 0;
+
+    setHasCompletedOnboarding(completed);
+  };
+
+  // LOGIN (aceita quizAnswers opcional)
+  const signIn = async (email, password, quizAnswers) => {
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+    if (error) throw error;
+
+    const uid = data.user.id;
+    const fullName = data.user.user_metadata?.full_name || null;
+
+    // garante linha em profiles
+    await ensureProfileRow(uid, fullName);
+
+    // se veio do quiz, salva quiz_data
+    if (quizAnswers && Object.keys(quizAnswers).length > 0) {
+      const { error: updateError } = await supabase
         .from('profiles')
-        .upsert({
-          id: authData.user.id,
-          full_name: name,
+        .update({
           quiz_data: quizAnswers,
-          role: 'user'
-        });
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', uid);
 
-      if (profileError) {
-        console.log("Aviso: Erro ao salvar perfil extra", profileError);
+      if (updateError) {
+        console.error('Erro ao salvar quiz_data no login:', updateError);
       }
+    }
 
-      await AsyncStorage.setItem('hasCompletedOnboarding', 'true');
-      setHasCompletedOnboarding(true);
-    },
+    await refreshProfileFlags(uid);
+    return data;
+  };
 
-    signOut: async () => {
-      await supabase.auth.signOut();
-      setUser(null);
-      setSession(null);
-      setUserRole(null);
-    },
+  // CADASTRO (aceita quizAnswers opcional)
+  const signUp = async (name, email, password, quizAnswers) => {
+    const { data: authData, error: authError } = await supabase.auth.signUp({
+      email,
+      password,
+      options: { data: { full_name: name } },
+    });
 
+    if (authError) throw authError;
+
+    const uid = authData.user?.id;
+    if (!uid) return authData;
+
+    await ensureProfileRow(uid, name);
+
+    const { error: updateError } = await supabase
+      .from('profiles')
+      .update({
+        full_name: name,
+        quiz_data: quizAnswers || {},
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', uid);
+
+    if (updateError) {
+      console.error('Erro ao salvar quiz_data no cadastro:', updateError);
+    }
+
+    await refreshProfileFlags(uid);
+    return authData;
+  };
+
+  const signOut = async () => {
+    await supabase.auth.signOut();
+  };
+
+  const value = {
     user,
-    userToken: session?.access_token,
-    userRole,
+    userToken,
     isLoading,
     hasCompletedOnboarding,
+    signIn,
+    signUp,
+    signOut,
   };
 
   return (
-    <AuthContext.Provider value={authContext}>
-      {children}
-    </AuthContext.Provider>
+    <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
   );
-};
+}
 
 export const useAuth = () => useContext(AuthContext);

@@ -1,4 +1,4 @@
 import { registerRootComponent } from 'expo';
-import App from './app/App';
+import AppTest from './AppTest'; // <-- Teste simples
 
-registerRootComponent(App);
+registerRootComponent(AppTest); // <-- Usar o teste

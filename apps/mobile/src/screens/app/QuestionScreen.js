@@ -1,4 +1,4 @@
-import React, { useState, useLayoutEffect, useCallback } from 'react'; // <-- 1. Importei o useCallback
+import React, { useState, useLayoutEffect, useCallback } from 'react';
 import { 
   View, 
   Text, 
@@ -6,13 +6,12 @@ import {
   Button, 
   TouchableOpacity, 
   ScrollView,
-  Platform 
+  Platform
 } from 'react-native';
-// --- 2. Importação Corrigida ---
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { Picker } from '@react-native-picker/picker'; 
-import { questions } from '../../data/questionData'; 
+import { questions } from '../../data/questionData';
 
 // --- Componente Interno ---
 
@@ -43,13 +42,11 @@ export default function QuestionScreen({ route, navigation }) {
     });
   }, [navigation, questionIndex]);
 
-  // --- NOSSA CORREÇÃO (useCallback) ---
   useFocusEffect(
-    useCallback(() => { // <-- 3. Corrigido de React.Callback para useCallback
+    useCallback(() => {
       setIsNavigating(false);
     }, [])
   );
-  // -------------------------
 
   // Função central para navegar
   const navigateForward = (valueToSave) => {
@@ -60,7 +57,8 @@ export default function QuestionScreen({ route, navigation }) {
 
     if (isLastQuestion) {
       console.log('Respostas Finais:', newAnswers);
-      navigation.navigate('Register', { quizAnswers: newAnswers });
+      // Após finalizar questionário, vai para tela de Login com as respostas
+      navigation.navigate('Login', { quizAnswers: newAnswers });
     } else {
       navigation.push('Question', { 
         questionIndex: questionIndex + 1,
@@ -97,7 +95,7 @@ export default function QuestionScreen({ route, navigation }) {
           ]}
           onPress={() => {
             setAnswer(option.value); 
-            navigateForward(option.value); // Navega para a próxima
+            navigateForward(option.value);
           }}
         >
           <Text style={styles.optionText}>{option.text}</Text>
@@ -110,12 +108,11 @@ export default function QuestionScreen({ route, navigation }) {
       return (
         <View style={styles.pickerContainer}>
           <Picker
-            selectedValue={answer} // O valor selecionado
-            onValueChange={(itemValue) => setAnswer(itemValue)} // Atualiza o state
+            selectedValue={answer}
+            onValueChange={(itemValue) => setAnswer(itemValue)}
             style={styles.picker}
-            itemStyle={styles.pickerItem} // (para iOS)
+            itemStyle={styles.pickerItem}
           >
-            {/* Gera os itens (ex: 140, 141, 142...) */}
             {generatePickerItems(questionData.min, questionData.max)}
           </Picker>
           <Text style={styles.unitText}>{questionData.unit}</Text>
@@ -149,7 +146,7 @@ export default function QuestionScreen({ route, navigation }) {
             
             {questionData.type === 'picker-input' && (
               <Button 
-                title={isLastQuestion ? 'Finalizar Questionário' : 'Próxima'} 
+                title={isLastQuestion ? 'Ir para Login' : 'Próxima'} 
                 onPress={() => navigateForward(answer)}
                 disabled={!answer || isNavigating} 
               />
@@ -198,7 +195,6 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
   },
-  // Estilos para 'single-choice'
   optionButton: {
     backgroundColor: '#fff',
     padding: 15,
@@ -216,7 +212,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#333',
   },
-  // Estilos para 'picker-input'
   pickerContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -230,8 +225,7 @@ const styles = StyleSheet.create({
         borderRadius: 8,
         overflow: 'hidden', 
       },
-      ios: {
-      }
+      ios: {}
     }),
   },
   picker: {
@@ -253,7 +247,6 @@ const styles = StyleSheet.create({
     marginLeft: 10,
     color: '#555',
   },
-  // Navegação
   navigationButtons: {
     flexDirection: 'row',
     justifyContent: 'space-between',
