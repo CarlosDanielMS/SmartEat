@@ -37,7 +37,6 @@ const ListItem = ({ item }) => {
 // --- Componente Principal da Tela ---
 
 export default function QuizStepScreen({ route, navigation }) {
-  // ✅ CORREÇÃO: Adicionar valor padrão caso route.params seja undefined
   const step = route.params?.step || 1;
   const [isNavigating, setIsNavigating] = useState(false);
   const stepData = infoSteps[step - 1]; 
@@ -57,6 +56,7 @@ export default function QuizStepScreen({ route, navigation }) {
     }, []) 
   );
 
+  // ✅ MUDANÇA: Ao finalizar vai para QuestionScreen
   const handleNext = () => {
     if (isNavigating) return; 
     setIsNavigating(true); 
@@ -136,7 +136,7 @@ export default function QuizStepScreen({ route, navigation }) {
   );
 }
 
-// --- Estilos Completos ---
+// --- Estilos Completos (mantidos originais) ---
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,

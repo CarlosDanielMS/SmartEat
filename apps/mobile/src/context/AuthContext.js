@@ -18,27 +18,37 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     const init = async () => {
       try {
+        console.log('🔵 [AuthContext] Verificando sessão...');
         const {
           data: { session },
         } = await supabase.auth.getSession();
 
         if (session?.user) {
+          console.log('✅ [AuthContext] Sessão encontrada:', session.user.email);
           setUser(session.user);
           setUserToken(session.access_token);
           await refreshProfileFlags(session.user.id);
+        } else {
+          console.log('⚠️ [AuthContext] Nenhuma sessão ativa');
         }
+      } catch (error) {
+        console.error('❌ [AuthContext] Erro ao verificar sessão:', error);
       } finally {
         setIsLoading(false);
       }
     };
 
     const { data: authListener } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
+      async (event, session) => {
+        console.log('🔵 [AuthContext] Auth state changed:', event);
+        
         if (session?.user) {
+          console.log('✅ [AuthContext] Usuário autenticado:', session.user.email);
           setUser(session.user);
           setUserToken(session.access_token);
           await refreshProfileFlags(session.user.id);
         } else {
+          console.log('⚠️ [AuthContext] Usuário deslogado');
           setUser(null);
           setUserToken(null);
           setHasCompletedOnboarding(false);
@@ -50,22 +60,9 @@ export function AuthProvider({ children }) {
     return () => authListener?.subscription?.unsubscribe();
   }, []);
 
-  const ensureProfileRow = async (userId, fullName) => {
-    const { error } = await supabase
-      .from('profiles')
-      .upsert(
-        {
-          id: userId,
-          full_name: fullName || null,
-          updated_at: new Date().toISOString(),
-        },
-        { onConflict: 'id' }
-      );
-
-    if (error) throw error;
-  };
-
   const refreshProfileFlags = async (userId) => {
+    console.log('🔵 [AuthContext] Buscando perfil do usuário:', userId);
+    
     const { data: profile, error } = await supabase
       .from('profiles')
       .select('quiz_data')
@@ -73,78 +70,102 @@ export function AuthProvider({ children }) {
       .maybeSingle();
 
     if (error) {
-      console.error('Erro ao ler profile para flags:', error);
+      console.error('❌ [AuthContext] Erro ao ler profile:', error);
+      setHasCompletedOnboarding(false);
+      return;
+    }
+
+    if (!profile) {
+      console.log('⚠️ [AuthContext] Perfil não encontrado');
       setHasCompletedOnboarding(false);
       return;
     }
 
     const completed =
-      !!profile &&
       !!profile.quiz_data &&
       Object.keys(profile.quiz_data).length > 0;
 
+    console.log('✅ [AuthContext] Quiz completado?', completed);
+    console.log('📊 [AuthContext] Quiz data:', profile.quiz_data);
     setHasCompletedOnboarding(completed);
   };
 
-  // LOGIN (aceita quizAnswers opcional)
-  const signIn = async (email, password, quizAnswers) => {
+  // ✅ LOGIN SIMPLIFICADO - Apenas email e password
+  const signIn = async (email, password) => {
+    console.log('🔵 [AuthContext/SignIn] Iniciando login...');
+    console.log('📝 Email:', email);
+    
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
-    if (error) throw error;
 
-    const uid = data.user.id;
-    const fullName = data.user.user_metadata?.full_name || null;
-
-    // garante linha em profiles
-    await ensureProfileRow(uid, fullName);
-
-    // se veio do quiz, salva quiz_data
-    if (quizAnswers && Object.keys(quizAnswers).length > 0) {
-      const { error: updateError } = await supabase
-        .from('profiles')
-        .update({
-          quiz_data: quizAnswers,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', uid);
-
-      if (updateError) {
-        console.error('Erro ao salvar quiz_data no login:', updateError);
-      }
+    if (error) {
+      console.error('❌ [AuthContext/SignIn] Erro:', error);
+      throw error;
     }
 
-    await refreshProfileFlags(uid);
+    console.log('✅ [AuthContext/SignIn] Login bem-sucedido!');
+    console.log('👤 Usuário:', data.user.email);
+    
+    // O onAuthStateChange vai atualizar automaticamente
     return data;
   };
 
-  // CADASTRO (aceita quizAnswers opcional)
-  const signUp = async (name, email, password, quizAnswers) => {
+  // ✅ CADASTRO COM QUIZ
+  const signUp = async (name, email, password, quizAnswers = {}) => {
+    console.log('🔵 [AuthContext/SignUp] Iniciando cadastro...');
+    console.log('📝 Dados:', { name, email, hasQuiz: Object.keys(quizAnswers).length > 0 });
+
+    // Criar usuário no Supabase Auth
     const { data: authData, error: authError } = await supabase.auth.signUp({
       email,
       password,
-      options: { data: { full_name: name } },
+      options: { 
+        data: { full_name: name },
+      },
     });
 
-    if (authError) throw authError;
+    if (authError) {
+      console.error('❌ [AuthContext/SignUp] Erro na autenticação:', authError);
+      throw authError;
+    }
 
     const uid = authData.user?.id;
-    if (!uid) return authData;
+    if (!uid) {
+      console.error('❌ [AuthContext/SignUp] User ID não encontrado');
+      throw new Error('Erro ao criar usuário');
+    }
 
-    await ensureProfileRow(uid, name);
+    console.log('✅ [AuthContext/SignUp] Usuário criado:', uid);
+    console.log('⏳ [AuthContext/SignUp] Aguardando criação do perfil...');
 
-    const { error: updateError } = await supabase
-      .from('profiles')
-      .update({
-        full_name: name,
-        quiz_data: quizAnswers || {},
-        updated_at: new Date().toISOString(),
-      })
-      .eq('id', uid);
+    // Aguarda 2 segundos para garantir que o perfil foi criado
+    await new Promise(resolve => setTimeout(resolve, 2000));
 
-    if (updateError) {
-      console.error('Erro ao salvar quiz_data no cadastro:', updateError);
+    // Criar/Atualizar perfil com upsert
+    console.log('🔵 [AuthContext/SignUp] Salvando perfil e quiz_data...');
+    
+    try {
+      const { error: upsertError } = await supabase
+        .from('profiles')
+        .upsert({
+          id: uid,
+          full_name: name,
+          quiz_data: quizAnswers,
+          updated_at: new Date().toISOString(),
+        }, {
+          onConflict: 'id',
+        });
+
+      if (upsertError) {
+        console.error('❌ [AuthContext/SignUp] Erro ao salvar perfil:', upsertError);
+        // Não lança erro, pois o usuário já foi criado
+      } else {
+        console.log('✅ [AuthContext/SignUp] Perfil e quiz_data salvos com sucesso!');
+      }
+    } catch (err) {
+      console.error('❌ [AuthContext/SignUp] Erro inesperado ao salvar perfil:', err);
     }
 
     await refreshProfileFlags(uid);
@@ -152,7 +173,9 @@ export function AuthProvider({ children }) {
   };
 
   const signOut = async () => {
+    console.log('🔵 [AuthContext/SignOut] Fazendo logout...');
     await supabase.auth.signOut();
+    console.log('✅ [AuthContext/SignOut] Logout bem-sucedido!');
   };
 
   const value = {

@@ -48,7 +48,7 @@ export default function QuestionScreen({ route, navigation }) {
     }, [])
   );
 
-  // Função central para navegar
+  // ✅ MUDANÇA: Função central para navegar - agora vai para Register no final
   const navigateForward = (valueToSave) => {
     if (isNavigating) return; 
     setIsNavigating(true); 
@@ -57,8 +57,8 @@ export default function QuestionScreen({ route, navigation }) {
 
     if (isLastQuestion) {
       console.log('Respostas Finais:', newAnswers);
-      // Após finalizar questionário, vai para tela de Login com as respostas
-      navigation.navigate('Login', { quizAnswers: newAnswers });
+      // ✅ Vai para Register com as respostas do questionário
+      navigation.navigate('Register', { quizAnswers: newAnswers });
     } else {
       navigation.push('Question', { 
         questionIndex: questionIndex + 1,
@@ -146,7 +146,7 @@ export default function QuestionScreen({ route, navigation }) {
             
             {questionData.type === 'picker-input' && (
               <Button 
-                title={isLastQuestion ? 'Ir para Login' : 'Próxima'} 
+                title={isLastQuestion ? 'Criar Conta' : 'Próxima'} 
                 onPress={() => navigateForward(answer)}
                 disabled={!answer || isNavigating} 
               />
@@ -158,7 +158,7 @@ export default function QuestionScreen({ route, navigation }) {
   );
 }
 
-// --- Estilos Completos ---
+// --- Estilos Completos (mantidos originais) ---
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,

@@ -29,6 +29,7 @@ export default function RegisterScreen({ navigation, route }) {
 
   useEffect(() => {
     if (quizAnswers && Object.keys(quizAnswers).length > 0) {
+      console.log('✅ Quiz recebido no Register:', quizAnswers);
       Alert.alert(
         'Quiz Completo! 🎉',
         'Suas respostas serão salvas ao criar sua conta.',
@@ -38,44 +39,85 @@ export default function RegisterScreen({ navigation, route }) {
   }, []);
 
   const handleRegister = async () => {
+    console.log('🔵 [1] Iniciando registro...');
+    console.log('📝 Dados:', { 
+      name, 
+      email, 
+      passwordLength: password.length,
+      hasQuizAnswers: Object.keys(quizAnswers).length > 0 
+    });
+
     if (!name || !email || !password || !confirmPassword) {
+      console.log('❌ Validação: Campos vazios');
       Alert.alert('Erro', 'Preencha todos os campos.');
       return;
     }
 
     if (!email.includes('@')) {
+      console.log('❌ Validação: Email inválido');
       Alert.alert('Erro', 'Digite um email válido.');
       return;
     }
 
     if (password !== confirmPassword) {
+      console.log('❌ Validação: Senhas não conferem');
       Alert.alert('Erro', 'As senhas não conferem.');
       return;
     }
 
     if (password.length < 6) {
+      console.log('❌ Validação: Senha muito curta');
       Alert.alert('Erro', 'A senha deve ter pelo menos 6 caracteres.');
       return;
     }
 
     if (name.trim().length < 3) {
+      console.log('❌ Validação: Nome muito curto');
       Alert.alert('Erro', 'Digite seu nome completo.');
       return;
     }
 
+    console.log('✅ [2] Todas validações passaram');
+
     try {
       setLoading(true);
-      await signUp(name, email, password, quizAnswers); // ✅ envia quizAnswers
+      console.log('🔵 [3] Chamando signUp do AuthContext...');
+      console.log('📤 Enviando:', { name, email, quizAnswers });
+      
+      const result = await signUp(name, email, password, quizAnswers);
+      
+      console.log('✅ [4] SignUp retornou:', result);
+      console.log('✅ [5] Cadastro bem-sucedido!');
 
       Alert.alert(
         'Sucesso!',
-        'Conta criada com sucesso! Bem-vindo ao SmartEat.'
+        'Conta criada com sucesso! Faça login para continuar.',
+        [
+          {
+            text: 'OK',
+            onPress: () => {
+              console.log('🔵 [6] Navegando para Login...');
+              navigation.reset({
+                index: 0,
+                routes: [{ name: 'Login' }],
+              });
+            },
+          },
+        ]
       );
-      // Navegação após cadastro é automática via AuthContext/AppNavigator
     } catch (error) {
-      Alert.alert('Erro no Cadastro', error.message);
+      console.error('❌ [ERRO] Erro no cadastro:', error);
+      console.error('❌ Mensagem:', error.message);
+      console.error('❌ Stack:', error.stack);
+      console.error('❌ Erro completo:', JSON.stringify(error, null, 2));
+      
+      Alert.alert(
+        'Erro no Cadastro', 
+        error.message || 'Erro desconhecido. Tente novamente.'
+      );
     } finally {
       setLoading(false);
+      console.log('🔵 [7] Loading finalizado');
     }
   };
 
@@ -208,7 +250,7 @@ export default function RegisterScreen({ navigation, route }) {
   );
 }
 
-// estilos
+// estilos (mantidos 100% originais)
 const styles = StyleSheet.create({
   container: {
     flex: 1,

@@ -42,8 +42,16 @@ export default function AppNavigator() {
           // Usuário autenticado -> vai direto para o App
           <Stack.Screen name="AppTabs" component={AppTabs} />
         ) : (
-          // Usuário NÃO autenticado -> Quiz + Login/Register
+          // Usuário NÃO autenticado -> Login como tela inicial
           <>
+            <Stack.Screen 
+              name="Login" 
+              component={LoginScreen} 
+            />
+            <Stack.Screen 
+              name="Register" 
+              component={RegisterScreen} 
+            />
             <Stack.Screen 
               name="QuizStep" 
               component={QuizStepScreen}
@@ -54,12 +62,8 @@ export default function AppNavigator() {
               component={QuestionScreen}
             />
             <Stack.Screen 
-              name="Login" 
-              component={LoginScreen} 
-            />
-            <Stack.Screen 
-              name="Register" 
-              component={RegisterScreen} 
+              name="WeightGoal" 
+              component={WeightGoalScreen}
             />
           </>
         )}

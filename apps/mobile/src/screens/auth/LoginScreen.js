@@ -1,5 +1,5 @@
 // apps/mobile/src/screens/auth/LoginScreen.js
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -15,26 +15,15 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../../context/AuthContext';
 
-export default function LoginScreen({ navigation, route }) {
+export default function LoginScreen({ navigation }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const { signIn } = useAuth();
 
-  // respostas do quiz, se veio do QuestionScreen
-  const quizAnswers = route?.params?.quizAnswers || null;
-
-  useEffect(() => {
-    if (quizAnswers) {
-      Alert.alert(
-        'Quiz Completo! 🎉',
-        'Faça login para continuar ou crie uma conta para salvar suas respostas.',
-        [{ text: 'OK' }]
-      );
-    }
-  }, [quizAnswers]);
-
   const handleLogin = async () => {
+    console.log('🔵 [Login] Iniciando login...');
+    
     if (!email || !password) {
       Alert.alert('Erro', 'Preencha todos os campos.');
       return;
@@ -47,9 +36,15 @@ export default function LoginScreen({ navigation, route }) {
 
     try {
       setLoading(true);
-      await signIn(email, password, quizAnswers); // ✅ envia quizAnswers
-      // navegação pós-login é feita pelo AuthContext/AppNavigator
+      console.log('🔵 [Login] Tentando autenticar:', email);
+      
+      // ✅ Login simples - sem quizAnswers
+      await signIn(email, password);
+      
+      console.log('✅ [Login] Login bem-sucedido!');
+      // Navegação automática via AuthContext/AppNavigator
     } catch (error) {
+      console.error('❌ [Login] Erro:', error);
       Alert.alert(
         'Erro no Login',
         error.message || 'Email ou senha incorretos.'
@@ -60,7 +55,8 @@ export default function LoginScreen({ navigation, route }) {
   };
 
   const goToRegister = () => {
-    navigation.navigate('Register', { quizAnswers });
+    console.log('🔵 [Login] Navegando para Quiz/Registro');
+    navigation.navigate('QuizStep', { step: 1 });
   };
 
   return (
@@ -132,7 +128,7 @@ export default function LoginScreen({ navigation, route }) {
               )}
             </TouchableOpacity>
 
-            <View className="divider" style={styles.divider}>
+            <View style={styles.divider}>
               <View style={styles.dividerLine} />
               <Text style={styles.dividerText}>OU</Text>
               <View style={styles.dividerLine} />
@@ -147,14 +143,6 @@ export default function LoginScreen({ navigation, route }) {
                 Criar nova conta
               </Text>
             </TouchableOpacity>
-
-            {quizAnswers && (
-              <View style={styles.quizInfo}>
-                <Text style={styles.quizInfoText}>
-                  ✓ Suas respostas do quiz serão salvas ao criar uma conta
-                </Text>
-              </View>
-            )}
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -162,7 +150,6 @@ export default function LoginScreen({ navigation, route }) {
   );
 }
 
-// estilos iguais aos que você já tinha
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -263,16 +250,5 @@ const styles = StyleSheet.create({
     color: '#34C759',
     fontSize: 16,
     fontWeight: 'bold',
-  },
-  quizInfo: {
-    backgroundColor: '#e8f5e9',
-    padding: 12,
-    borderRadius: 8,
-    marginTop: 20,
-  },
-  quizInfoText: {
-    color: '#2e7d32',
-    fontSize: 14,
-    textAlign: 'center',
   },
 });
