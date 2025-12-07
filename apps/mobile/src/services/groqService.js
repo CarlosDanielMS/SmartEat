@@ -2,8 +2,8 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { tacoService } from './tacoService';
 
-const GROQ_API_KEY = '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';
-const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
+const GROQ_API_KEY = 'CHAVE-API';
+const GROQ_API_URL = 'URL-DA-API-GROQ';
 
 const CACHE_KEY_PREFIX = '@mealplan_cache_';
 

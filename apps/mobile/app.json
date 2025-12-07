@@ -14,9 +14,9 @@
       "package": "com.smarteat.app"
     },
     "extra": {
-        "supabaseUrl": "https://jynwntrlmwcqzlfplvdr.supabase.co",
-        "supabaseAnonKey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp5bndudHJsbXdjcXpsZnBsdmRyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzI5NzAxNDIsImV4cCI6MjA0ODU0NjE0Mn0.SxUNqr45TkHAmR9rkQnqJGBvZrBFd0bKEUc6L1yNW38",
-        "groqApiKey": "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"
+        "supabaseUrl": "url-supabase",
+        "supabaseAnonKey": "chave-api-supabase",
+        "groqApiKey": "chave-api"
       }
     }
   

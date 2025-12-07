@@ -58,7 +58,7 @@ export default function AppTabs() {
       <Tab.Screen
         name="Home"
         component={HomeStack}
-        options={{ title: 'Home' }}
+        options={{ title: 'SmartEat - Nutrição Inteligente' }}
       />
       <Tab.Screen
         name="Camera"
