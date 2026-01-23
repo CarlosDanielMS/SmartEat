@@ -83,7 +83,7 @@ export default function FoodForm({ initialData = {}, onSubmit }) {
     }
 
     let result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaType.Images, // <--- CORREÇÃO AQUI
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
       aspect: [1, 1],
       quality: 0.5,

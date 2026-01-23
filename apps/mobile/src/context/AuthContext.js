@@ -41,7 +41,7 @@ export function AuthProvider({ children }) {
     const { data: authListener } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         console.log('🔵 [AuthContext] Auth state changed:', event);
-        
+
         if (session?.user) {
           console.log('✅ [AuthContext] Usuário autenticado:', session.user.email);
           setUser(session.user);
@@ -62,39 +62,43 @@ export function AuthProvider({ children }) {
 
   const refreshProfileFlags = async (userId) => {
     console.log('🔵 [AuthContext] Buscando perfil do usuário:', userId);
-    
-    const { data: profile, error } = await supabase
-      .from('profiles')
-      .select('quiz_data')
-      .eq('id', userId)
-      .maybeSingle();
 
-    if (error) {
-      console.error('❌ [AuthContext] Erro ao ler profile:', error);
+    try {
+      const { data: profile, error } = await supabase
+        .from('profiles')
+        .select('quiz_data')
+        .eq('id', userId)
+        .maybeSingle();
+
+      if (error) {
+        console.error('❌ [AuthContext] Erro ao ler profile:', error);
+        setHasCompletedOnboarding(false);
+        return;
+      }
+
+      if (!profile) {
+        console.log('⚠️ [AuthContext] Perfil não encontrado');
+        setHasCompletedOnboarding(false);
+        return;
+      }
+
+      const completed =
+        !!profile.quiz_data &&
+        Object.keys(profile.quiz_data).length > 0;
+
+      console.log('✅ [AuthContext] Quiz completado?', completed);
+      console.log('📊 [AuthContext] Quiz data:', profile.quiz_data);
+      setHasCompletedOnboarding(completed);
+    } catch (err) {
+      console.error('❌ [AuthContext] Erro inesperado ao buscar perfil:', err);
       setHasCompletedOnboarding(false);
-      return;
     }
-
-    if (!profile) {
-      console.log('⚠️ [AuthContext] Perfil não encontrado');
-      setHasCompletedOnboarding(false);
-      return;
-    }
-
-    const completed =
-      !!profile.quiz_data &&
-      Object.keys(profile.quiz_data).length > 0;
-
-    console.log('✅ [AuthContext] Quiz completado?', completed);
-    console.log('📊 [AuthContext] Quiz data:', profile.quiz_data);
-    setHasCompletedOnboarding(completed);
   };
 
-  // ✅ LOGIN SIMPLIFICADO - Apenas email e password
   const signIn = async (email, password) => {
     console.log('🔵 [AuthContext/SignIn] Iniciando login...');
     console.log('📝 Email:', email);
-    
+
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
@@ -107,21 +111,17 @@ export function AuthProvider({ children }) {
 
     console.log('✅ [AuthContext/SignIn] Login bem-sucedido!');
     console.log('👤 Usuário:', data.user.email);
-    
-    // O onAuthStateChange vai atualizar automaticamente
     return data;
   };
 
-  // ✅ CADASTRO COM QUIZ
   const signUp = async (name, email, password, quizAnswers = {}) => {
     console.log('🔵 [AuthContext/SignUp] Iniciando cadastro...');
     console.log('📝 Dados:', { name, email, hasQuiz: Object.keys(quizAnswers).length > 0 });
 
-    // Criar usuário no Supabase Auth
     const { data: authData, error: authError } = await supabase.auth.signUp({
       email,
       password,
-      options: { 
+      options: {
         data: { full_name: name },
       },
     });
@@ -140,27 +140,27 @@ export function AuthProvider({ children }) {
     console.log('✅ [AuthContext/SignUp] Usuário criado:', uid);
     console.log('⏳ [AuthContext/SignUp] Aguardando criação do perfil...');
 
-    // Aguarda 2 segundos para garantir que o perfil foi criado
     await new Promise(resolve => setTimeout(resolve, 2000));
 
-    // Criar/Atualizar perfil com upsert
     console.log('🔵 [AuthContext/SignUp] Salvando perfil e quiz_data...');
-    
+
     try {
       const { error: upsertError } = await supabase
         .from('profiles')
-        .upsert({
-          id: uid,
-          full_name: name,
-          quiz_data: quizAnswers,
-          updated_at: new Date().toISOString(),
-        }, {
-          onConflict: 'id',
-        });
+        .upsert(
+          {
+            id: uid,
+            full_name: name,
+            quiz_data: quizAnswers,
+            updated_at: new Date().toISOString(),
+          },
+          {
+            onConflict: 'id',
+          }
+        );
 
       if (upsertError) {
         console.error('❌ [AuthContext/SignUp] Erro ao salvar perfil:', upsertError);
-        // Não lança erro, pois o usuário já foi criado
       } else {
         console.log('✅ [AuthContext/SignUp] Perfil e quiz_data salvos com sucesso!');
       }

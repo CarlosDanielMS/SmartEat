@@ -5,6 +5,12 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
+    "icon": "./assets/icon.png",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
     "assetBundlePatterns": ["**/*"],
     "ios": {
       "supportsTablet": true,
@@ -14,12 +20,17 @@
       "package": "com.smarteat.app"
     },
     "extra": {
-        "supabaseUrl": "url-supabase",
-        "supabaseAnonKey": "chave-api-supabase",
-        "groqApiKey": "chave-api"
+      "supabaseUrl": "url-supabase",
+      "supabaseAnonKey": "chave-api-supabase",
+      "groqApiKey": "SUA_CHAVE_AQUI",
+      "eas": {
+        "projectId": "9ec83e05-4749-4b6b-a5df-bac9ca31cf05"
       }
-    }
-  
-
+    },
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      "expo-web-browser"
+    ]
   }
-
+}

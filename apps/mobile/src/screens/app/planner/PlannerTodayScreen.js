@@ -1,5 +1,5 @@
 // apps/mobile/src/screens/app/planner/PlannerTodayScreen.js
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, Alert, Dimensions, ActivityIndicator
 } from 'react-native';
