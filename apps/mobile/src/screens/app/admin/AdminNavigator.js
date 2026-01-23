@@ -2,12 +2,12 @@ import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
 // Home
-import AdminHomeScreen from './AdminHomeScreen';
+import AdminHomeScreen from './AdminHome';
 // Placeholders
 import ManageAuthenticatorScreen from './authenticator/ManageAuthenticatorScreen';
 
 // CRUD Alérgenos
-import ManageAllergensScreen from './allergens/ManageAllergensScreen';
+import ManageAllergensScreen from './allergens/ManageAllergens';
 import AddAllergenScreen from './allergens/AddAllergenScreen';
 import EditAllergenScreen from './allergens/EditAllergenScreen';
 
@@ -17,14 +17,14 @@ import AddClassificationScreen from './classifications/AddClassificationScreen';
 import EditClassificationScreen from './classifications/EditClassificationScreen';
 
 // CRUD Alimentos
-import ManageFoodsScreen from './foods/ManageFoodsScreen';
-import AddFoodScreen from './foods/AddFoodScreen';
-import EditFoodScreen from './foods/EditFoodScreen';
+import ManageFoodsScreen from './foods/ManageFoods';
+import AddFoodScreen from './foods/AddFood';
+import EditFoodScreen from './foods/EditFood';
 
 // --- 1. IMPORTAÇÃO DAS TELAS DE USUÁRIOS ---
-import ManageUsersScreen from './users/ManageUsersScreen';
-import AddUserScreen from './users/AddUserScreen';
-import EditUserScreen from './users/EditUserScreen';
+import ManageUsersScreen from './users/ManageUsers';
+import AddUserScreen from './users/AddUser';
+import EditUserScreen from './users/EditUser';
 // ---
 
 const Stack = createNativeStackNavigator();

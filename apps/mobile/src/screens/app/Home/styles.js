@@ -1,0 +1,460 @@
+import { StyleSheet, Dimensions } from 'react-native';
+
+const { width } = Dimensions.get('window');
+
+export const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#F8F9FA',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  header: {
+    padding: 20,
+    backgroundColor: '#fff',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E9ECEF',
+  },
+  greeting: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#212529',
+  },
+  dateNavigator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  date: {
+    fontSize: 14,
+    color: '#6C757D',
+    textTransform: 'capitalize',
+    flex: 1,
+    textAlign: 'center',
+  },
+  adminBadge: {
+    backgroundColor: '#4CAF50',
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  adminBadgeText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
+  tabContainer: {
+    flexDirection: 'row',
+    backgroundColor: '#fff',
+    padding: 8,
+    marginBottom: 8,
+  },
+  tabButton: {
+    flex: 1,
+    paddingVertical: 12,
+    alignItems: 'center',
+    borderRadius: 8,
+    marginHorizontal: 4,
+  },
+  tabButtonActive: {
+    backgroundColor: '#4CAF50',
+  },
+  tabText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#6C757D',
+  },
+  tabTextActive: {
+    color: '#fff',
+  },
+  caloriesCard: {
+    backgroundColor: '#fff',
+    padding: 20,
+    marginBottom: 8,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#212529',
+    marginBottom: 16,
+  },
+  caloriesRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'center',
+  },
+  calorieItem: {
+    alignItems: 'center',
+  },
+  calorieValue: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: '#4CAF50',
+  },
+  calorieLabel: {
+    fontSize: 12,
+    color: '#6C757D',
+    marginTop: 4,
+  },
+  calorieDivider: {
+    marginHorizontal: 8,
+  },
+  calorieSlash: {
+    fontSize: 24,
+    color: '#ADB5BD',
+    fontWeight: '300',
+  },
+  section: {
+    backgroundColor: '#fff',
+    padding: 20,
+    marginBottom: 8,
+  },
+  macrosCard: {},
+  nutrientContainer: {
+    marginBottom: 12,
+  },
+  nutrientHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 4,
+  },
+  nutrientName: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#212529',
+  },
+  nutrientValue: {
+    fontSize: 12,
+    color: '#6C757D',
+  },
+  nutrientBarContainer: {
+    height: 8,
+    backgroundColor: '#E9ECEF',
+    borderRadius: 4,
+    overflow: 'hidden',
+    marginBottom: 4,
+  },
+  nutrientBarFill: {
+    height: '100%',
+    borderRadius: 4,
+  },
+  nutrientPercentage: {
+    fontSize: 11,
+    color: '#ADB5BD',
+    textAlign: 'right',
+  },
+  mealCard: {
+    backgroundColor: '#F8F9FA',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+    borderWidth: 2,
+    borderColor: '#E9ECEF',
+  },
+  mealCardComplete: {
+    borderColor: '#4CAF50',
+    backgroundColor: '#F1F8F4',
+  },
+  mealHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  checkboxContainer: {
+    marginRight: 12,
+    padding: 4,
+  },
+  checkbox: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    borderWidth: 2,
+    borderColor: '#ADB5BD',
+    backgroundColor: '#fff',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  checkboxChecked: {
+    backgroundColor: '#4CAF50',
+    borderColor: '#4CAF50',
+  },
+  mealContent: {
+    flex: 1,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  mealTitleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  mealInfo: {
+    marginLeft: 12,
+    flex: 1,
+  },
+  mealType: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#212529',
+  },
+  mealName: {
+    fontSize: 13,
+    color: '#007AFF',
+    marginTop: 2,
+    fontWeight: '500',
+  },
+  mealTime: {
+    fontSize: 12,
+    color: '#6C757D',
+    marginTop: 2,
+  },
+  mealRightSide: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  foodCountBadge: {
+    backgroundColor: '#FF9800',
+    borderRadius: 10,
+    width: 24,
+    height: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  foodCountText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
+  mealItems: {
+    marginTop: 12,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#E9ECEF',
+    marginLeft: 40,
+  },
+  mealMacros: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    paddingVertical: 12,
+    backgroundColor: '#fff',
+    borderRadius: 8,
+    marginBottom: 12,
+  },
+  macroItem: {
+    alignItems: 'center',
+  },
+  macroValue: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#212529',
+  },
+  macroLabel: {
+    fontSize: 10,
+    color: '#6C757D',
+    marginTop: 2,
+  },
+  ingredientsList: {
+    marginTop: 4,
+  },
+  ingredientsTitle: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#495057',
+    marginBottom: 8,
+  },
+  mealItem: {
+    fontSize: 14,
+    color: '#495057',
+    marginBottom: 4,
+  },
+  mealItemMore: {
+    fontSize: 12,
+    color: '#6C757D',
+    fontStyle: 'italic',
+    marginTop: 4,
+  },
+  mealPending: {
+    fontSize: 11,
+    color: '#FF9800',
+    fontStyle: 'italic',
+    marginTop: 8,
+  },
+  mealEmpty: {
+    fontSize: 12,
+    color: '#ADB5BD',
+    fontStyle: 'italic',
+    marginTop: 8,
+    marginLeft: 0,
+  },
+  emptyMeals: {
+    alignItems: 'center',
+    paddingVertical: 40,
+  },
+  emptyMealsIcon: {
+    fontSize: 60,
+    marginBottom: 12,
+  },
+  emptyMealsText: {
+    fontSize: 14,
+    color: '#6C757D',
+    marginBottom: 20,
+  },
+  generateButton: {
+    backgroundColor: '#007AFF',
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 8,
+  },
+  generateButtonText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
+  weekScrollContainer: {
+    flex: 1,
+    backgroundColor: '#F8F9FA',
+  },
+  weekDaySection: {
+    backgroundColor: '#fff',
+    marginBottom: 12,
+    borderRadius: 12,
+    overflow: 'hidden',
+    marginHorizontal: 16,
+    marginTop: 8,
+  },
+  weekDayHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16,
+    backgroundColor: '#F8F9FA',
+    borderBottomWidth: 2,
+    borderBottomColor: '#E9ECEF',
+  },
+  weekDayHeaderToday: {
+    backgroundColor: '#E8F5E9',
+    borderBottomColor: '#4CAF50',
+  },
+  weekDayHeaderLeft: {
+    flex: 1,
+  },
+  weekDayHeaderRight: {
+    alignItems: 'flex-end',
+  },
+  weekDayTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#212529',
+    marginBottom: 4,
+  },
+  weekDayTitleToday: {
+    color: '#4CAF50',
+  },
+  weekDaySubtitle: {
+    fontSize: 13,
+    color: '#6C757D',
+    textTransform: 'capitalize',
+  },
+  weekDayCaloriesTotal: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#4CAF50',
+    marginBottom: 4,
+  },
+  todayBadge: {
+    backgroundColor: '#4CAF50',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+  },
+  todayBadgeText: {
+    color: '#fff',
+    fontSize: 11,
+    fontWeight: 'bold',
+  },
+  weekMealsList: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+  },
+  weekMealsTitle: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#6C757D',
+    marginBottom: 8,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  weekMealItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F8F9FA',
+  },
+  weekMealName: {
+    fontSize: 14,
+    color: '#495057',
+    flex: 1,
+  },
+  weekMealCalories: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#6C757D',
+  },
+  weekMealConsumed: {
+    color: '#4CAF50',
+  },
+  weekMealEmpty: {
+    fontSize: 13,
+    color: '#ADB5BD',
+    fontStyle: 'italic',
+    textAlign: 'center',
+    paddingVertical: 8,
+  },
+  viewDayButton: {
+    padding: 16,
+    backgroundColor: '#fff',
+    alignItems: 'center',
+    borderTopWidth: 1,
+    borderTopColor: '#E9ECEF',
+  },
+  viewDayButtonText: {
+    color: '#007AFF',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  monthContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    backgroundColor: '#fff',
+    padding: 8,
+    marginBottom: 8,
+  },
+  monthDayCard: {
+    width: (width - 64) / 7,
+    aspectRatio: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    margin: 2,
+    backgroundColor: '#F8F9FA',
+    borderRadius: 8,
+  },
+  monthDayNumber: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#212529',
+    marginBottom: 2,
+  },
+  monthDayCalories: {
+    fontSize: 9,
+    color: '#4CAF50',
+  },
+});

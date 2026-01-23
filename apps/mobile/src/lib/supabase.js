@@ -1,12 +1,14 @@
 // apps/mobile/src/lib/supabase.js
+import 'react-native-url-polyfill/auto';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createClient } from '@supabase/supabase-js';
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from '@env';
 
-// Substitua pelas suas credenciais do painel do Supabase
-const supabaseUrl = 'https://lihpyhdgvbokechqvgvr.supabase.co';
-const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxpaHB5aGRndmJva2VjaHF2Z3ZyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY0MjI5NDgsImV4cCI6MjA3MTk5ODk0OH0.eOunzzVcgCdEaSEhakTs180sdIueW2sGJmdp_2f_Hb8';
+if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+  console.log('[Supabase] ENV faltando:', { SUPABASE_URL, hasKey: !!SUPABASE_ANON_KEY });
+}
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
   auth: {
     storage: AsyncStorage,
     autoRefreshToken: true,

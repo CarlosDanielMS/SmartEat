@@ -1,24 +1,23 @@
+// src/navigation/AppNavigator.js
 import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { useAuth } from '../context/AuthContext';
+
 import { View, Text, ActivityIndicator, StyleSheet } from 'react-native';
 
-// Importar telas de Auth
-import LoginScreen from '../screens/auth/LoginScreen';
-import RegisterScreen from '../screens/auth/RegisterScreen';
+import { useAuth } from '../context/AuthContext';
 
-// Importar Tabs
+import LoginScreen from '../screens/auth/Login';
+import RegisterScreen from '../screens/auth/Register';
+import QuizStepScreen from '../screens/app/QuizStep';
+import QuestionScreen from '../screens/app/Question';
+import WeightGoalScreen from '../screens/app/WeightGoal';
+
 import AppTabs from './AppTabs';
-
-// Importar telas de Onboarding/Quiz
-import QuizStepScreen from '../screens/app/QuizStepScreen';
-import QuestionScreen from '../screens/app/QuestionScreen';
-import WeightGoalScreen from '../screens/app/WeightGoalScreen';
+import TacoFoodsScreen from '../screens/TacoFoodsScreen'; // ajuste o caminho
 
 const Stack = createNativeStackNavigator();
 
-// Tela de Loading
 function LoadingScreen() {
   return (
     <View style={styles.loadingContainer}>
@@ -29,42 +28,38 @@ function LoadingScreen() {
 }
 
 export default function AppNavigator() {
-  const { user, userToken, isLoading, hasCompletedOnboarding } = useAuth();
+  const { userToken, isLoading } = useAuth();
 
-  if (isLoading) {
-    return <LoadingScreen />;
-  }
+  if (isLoading) return <LoadingScreen />;
 
   return (
     <NavigationContainer>
-      <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Navigator>
         {userToken ? (
-          // Usuário autenticado -> vai direto para o App
-          <Stack.Screen name="AppTabs" component={AppTabs} />
-        ) : (
-          // Usuário NÃO autenticado -> Login como tela inicial
           <>
-            <Stack.Screen 
-              name="Login" 
-              component={LoginScreen} 
+            <Stack.Screen
+              name="AppTabs"
+              component={AppTabs}
+              options={{ headerShown: false }}
             />
-            <Stack.Screen 
-              name="Register" 
-              component={RegisterScreen} 
+            <Stack.Screen
+              name="TacoFoods"
+              component={TacoFoodsScreen}
+              options={{ title: 'Alimentos TACO', headerShown: true }}
             />
-            <Stack.Screen 
-              name="QuizStep" 
+          </>
+        ) : (
+          <>
+            <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }} />
+            <Stack.Screen
+              name="QuizStep"
               component={QuizStepScreen}
               initialParams={{ step: 1 }}
+              options={{ headerShown: false }}
             />
-            <Stack.Screen 
-              name="Question" 
-              component={QuestionScreen}
-            />
-            <Stack.Screen 
-              name="WeightGoal" 
-              component={WeightGoalScreen}
-            />
+            <Stack.Screen name="Question" component={QuestionScreen} options={{ headerShown: false }} />
+            <Stack.Screen name="Register" component={RegisterScreen} options={{ headerShown: false }} />
+            <Stack.Screen name="WeightGoal" component={WeightGoalScreen} options={{ headerShown: false }} />
           </>
         )}
       </Stack.Navigator>
@@ -73,15 +68,6 @@ export default function AppNavigator() {
 }
 
 const styles = StyleSheet.create({
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#fff',
-  },
-  loadingText: {
-    marginTop: 10,
-    fontSize: 16,
-    color: '#666',
-  },
+  loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#fff' },
+  loadingText: { marginTop: 10, fontSize: 16, color: '#666' },
 });

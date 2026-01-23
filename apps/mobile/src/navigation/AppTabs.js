@@ -3,14 +3,23 @@ import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
-import { useAuth } from '../context/AuthContext';
 
-import HomeScreen from '../screens/app/HomeScreen';
-import AddFoodScreen from '../screens/app/AddFoodScreen';
-import CameraScreen from '../screens/app/CameraScreen';
-import AutopilotScreen from '../screens/app/AutopilotScreen';
-import NotificationsScreen from '../screens/app/NotificationsScreen';
-import ProfileScreen from '../screens/app/ProfileScreen';
+import HomeScreen from '../screens/app/Home';
+import AddFoodScreen from '../screens/app/AddFood';
+import CameraScreen from '../screens/app/Camera';
+import AutopilotScreen from '../screens/app/Autopilot';
+import NotificationsScreen from '../screens/app/Notifications';
+import ProfileScreen from '../screens/app/Profile';
+import DiaryScreen from '../screens/app/Diary';
+
+import AccountPrivacyScreen from '../screens/app/AccountPrivacy'; // ✅ novo
+import ActivityScreen from '../screens/app/Activity';
+import SupportScreen from '../screens/app/Support';
+import AboutScreen from '../screens/app/About';
+
+
+
+
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -20,13 +29,27 @@ function HomeStack() {
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="HomeMain" component={HomeScreen} />
       <Stack.Screen name="AddFood" component={AddFoodScreen} />
+      <Stack.Screen name="Diary" component={DiaryScreen} />
+    </Stack.Navigator>
+  );
+}
+
+// ✅ novo stack para perfil
+function ProfileStack() {
+  return (
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="ProfileMain" component={ProfileScreen} />
+      <Stack.Screen name="AccountPrivacy" component={AccountPrivacyScreen} />
+      <Stack.Screen name="Activity" component={ActivityScreen} />
+      <Stack.Screen name="Support" component={SupportScreen} />
+      <Stack.Screen name="About" component={AboutScreen} /> 
+
+
     </Stack.Navigator>
   );
 }
 
 export default function AppTabs() {
-  const { userRole } = useAuth();
-
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
@@ -77,9 +100,10 @@ export default function AppTabs() {
       />
       <Tab.Screen
         name="Profile"
-        component={ProfileScreen}
+        component={ProfileStack}   // ✅ agora usa o stack, não o Profile direto
         options={{ title: 'Perfil' }}
       />
     </Tab.Navigator>
   );
 }
+

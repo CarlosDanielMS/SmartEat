@@ -6,12 +6,9 @@ import {
   TouchableOpacity, 
   Modal, 
   ScrollView,
-  Dimensions 
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import Svg, { Circle } from 'react-native-svg';
-
-const { width } = Dimensions.get('window');
 
 // --- Componente Circular Progress Reutilizável ---
 const CircularProgress = ({ value, max, color, size = 80, strokeWidth = 8, label, unit, showMax = true }) => {
